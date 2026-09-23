@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const COLUMNS = [
   { key: 'AWAITING_SHIPMENT', label: 'Aguardando Envio' },
@@ -66,12 +67,12 @@ export default function KanbanBoard() {
                 <div style={{ fontSize: 12, marginTop: 4 }}>
                   {chat.messages?.[0]?.content?.slice(0, 40) || 'Sem mensagens ainda'}
                 </div>
-                <a
-                  href={`/loja/chats/${chat.protocol}`}
+                <Link
+                  to={`/loja/chats/${chat.protocol}`}
                   style={{ fontSize: 12, color: 'var(--da-primary)', display: 'inline-block', marginTop: 6 }}
                 >
                   Abrir conversa
-                </a>
+                </Link>
               </div>
             ))}
           </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import ThemeSelector from '../../components/admin/ThemeSelector';
 
 export default function AdminDashboard() {
@@ -49,8 +50,8 @@ export default function AdminDashboard() {
       />
 
       <div style={{ display: 'flex', gap: 12 }}>
-        <a href="/admin/chats" className="da-btn da-btn-outline">Monitoria de Chats</a>
-        <a href="/admin/anuncios/aprovacao" className="da-btn da-btn-outline">Aprovação de Anúncios</a>
+        <Link to="/admin/chats" className="da-btn da-btn-outline">Monitoria de Chats</Link>
+        <Link to="/admin/anuncios/aprovacao" className="da-btn da-btn-outline">Aprovação de Anúncios</Link>
       </div>
     </div>
   );

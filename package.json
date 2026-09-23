@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node src/server.js",
-    "build": "prisma generate",
+    "build": "prisma generate && npm install --prefix frontend && npm run build --prefix frontend",
     "postinstall": "prisma generate",
     "migrate": "prisma migrate deploy"
   },

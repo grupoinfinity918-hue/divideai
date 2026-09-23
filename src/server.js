@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 
@@ -15,7 +16,15 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api', paymentRoutes);
 app.use('/api', chatRoutes);
 
+const FRONTEND_DIST = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(FRONTEND_DIST));
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Divide Aí backend rodando na porta ${PORT}`);
+  console.log(`Divide Aí rodando na porta ${PORT}`);
 });

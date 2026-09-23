@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export default function Header() {
   return (
     <header style={{
@@ -13,12 +15,12 @@ export default function Header() {
         justifyContent: 'space-between',
         padding: '14px 16px'
       }}>
-        <a href="/" style={{ fontWeight: 800, fontSize: 22, color: 'var(--da-primary)', textDecoration: 'none' }}>
+        <Link to="/" style={{ fontWeight: 800, fontSize: 22, color: 'var(--da-primary)', textDecoration: 'none' }}>
           Divide Aí
-        </a>
+        </Link>
         <nav style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <a href="/login" className="da-btn da-btn-outline">Entrar</a>
-          <a href="/loja/nova" className="da-btn">Vender</a>
+          <Link to="/loja/atendimentos" className="da-btn da-btn-outline">Painel da Loja</Link>
+          <Link to="/admin" className="da-btn">Admin</Link>
         </nav>
       </div>
 
