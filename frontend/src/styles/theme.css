@@ -1,0 +1,68 @@
+:root {
+  --da-primary: #ec1c6a;
+  --da-primary-dark: #c4104f;
+  --da-primary-light: #ff8fb8;
+  --da-bg: #ffffff;
+  --da-surface: #fff5f8;
+  --da-text: #2b1620;
+  --da-text-muted: #8a6b76;
+  --da-border: #ffd6e4;
+  --da-radius: 16px;
+  --da-radius-sm: 10px;
+  --da-shadow: 0 4px 20px rgba(236, 28, 106, 0.12);
+  --da-font: 'Poppins', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--da-font);
+}
+
+body {
+  margin: 0;
+  background: var(--da-bg);
+  color: var(--da-text);
+}
+
+.da-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.da-btn {
+  background: var(--da-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--da-radius-sm);
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.da-btn:hover {
+  background: var(--da-primary-dark);
+  transform: translateY(-1px);
+}
+
+.da-btn-outline {
+  background: transparent;
+  color: var(--da-primary);
+  border: 2px solid var(--da-primary);
+}
+
+.da-card {
+  background: var(--da-surface);
+  border: 1px solid var(--da-border);
+  border-radius: var(--da-radius);
+  box-shadow: var(--da-shadow);
+  padding: 16px;
+}
+
+@media (max-width: 768px) {
+  .da-container {
+    padding: 0 12px;
+  }
+}
