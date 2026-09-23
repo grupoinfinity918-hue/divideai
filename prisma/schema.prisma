@@ -114,6 +114,7 @@ model User {
   messages        ChatMessage[]
   reviewsGiven    Review[]         @relation("ReviewAuthor")
   reviewsReceived Review[]         @relation("ReviewTarget")
+  withdrawals     WithdrawalRequest[]
 }
 
 model Wallet {
@@ -270,6 +271,31 @@ model WhatsappNotification {
   sentAt    DateTime?
   success   Boolean       @default(false)
   createdAt DateTime      @default(now())
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PAID
+  REJECTED
+}
+
+enum PixKeyType {
+  CPF
+  EMAIL
+  PHONE
+  RANDOM
+}
+
+model WithdrawalRequest {
+  id         String           @id @default(uuid())
+  sellerId   String
+  seller     User             @relation(fields: [sellerId], references: [id])
+  amount     Decimal          @db.Decimal(12, 2)
+  pixKeyType PixKeyType
+  pixKey     String
+  status     WithdrawalStatus @default(PENDING)
+  paidAt     DateTime?
+  createdAt  DateTime         @default(now())
 }
 
 model AdminSettings {

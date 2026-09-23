@@ -33,66 +33,40 @@ export default function FloatingAIChat({ enabled = true }) {
   }
 
   return (
-    <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 100 }}>
+    <div className="fixed bottom-5 right-5 z-[100]">
       {open && (
-        <div className="da-card" style={{
-          width: 320,
-          maxWidth: '85vw',
-          height: 420,
-          display: 'flex',
-          flexDirection: 'column',
-          marginBottom: 12
-        }}>
-          <div style={{ fontWeight: 700, marginBottom: 8, color: 'var(--da-primary)' }}>
-            Assistente Divide Aí
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="card w-80 max-w-[85vw] h-[420px] flex flex-col p-4 mb-3">
+          <div className="font-bold text-pink-neon mb-2">Assistente Divide Aí</div>
+          <div className="flex-1 overflow-y-auto flex flex-col gap-2">
             {messages.map((m, i) => (
               <div
                 key={i}
-                style={{
-                  alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-                  background: m.role === 'user' ? 'var(--da-primary)' : '#fff',
-                  color: m.role === 'user' ? '#fff' : 'var(--da-text)',
-                  border: m.role === 'user' ? 'none' : '1px solid var(--da-border)',
-                  borderRadius: 12,
-                  padding: '8px 12px',
-                  maxWidth: '85%',
-                  fontSize: 14
-                }}
+                className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
+                  m.role === 'user'
+                    ? 'self-end bg-pink-neon text-white'
+                    : 'self-start bg-white border border-pink-100 text-gray-800'
+                }`}
               >
                 {m.content}
               </div>
             ))}
-            {loading && <div style={{ fontSize: 13, color: 'var(--da-text-muted)' }}>digitando...</div>}
+            {loading && <div className="text-xs text-gray-400">digitando...</div>}
           </div>
-          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+          <div className="flex gap-2 mt-2">
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage()}
               placeholder="Digite sua dúvida..."
-              style={{
-                flex: 1,
-                borderRadius: 'var(--da-radius-sm)',
-                border: '1px solid var(--da-border)',
-                padding: '8px 10px'
-              }}
+              className="flex-1 rounded-xl border border-pink-100 px-3 py-2 text-sm"
             />
-            <button className="da-btn" onClick={sendMessage}>Enviar</button>
+            <button className="btn-primary text-sm" onClick={sendMessage}>Enviar</button>
           </div>
         </div>
       )}
       <button
         onClick={() => setOpen(o => !o)}
-        className="da-btn"
-        style={{
-          borderRadius: '50%',
-          width: 56,
-          height: 56,
-          fontSize: 22,
-          boxShadow: 'var(--da-shadow)'
-        }}
+        className="btn-primary rounded-full w-14 h-14 text-xl shadow-lg"
       >
         {open ? '×' : '💬'}
       </button>

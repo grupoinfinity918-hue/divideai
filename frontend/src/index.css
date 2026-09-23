@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-white text-gray-900 font-sans;
+}
+
+.btn-primary {
+  @apply bg-pink-neon text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-pink-dark transition-colors;
+}
+
+.btn-outline {
+  @apply border-2 border-pink-neon text-pink-neon font-semibold px-5 py-2 rounded-xl hover:bg-pink-soft transition-colors;
+}
+
+.card {
+  @apply bg-white border border-pink-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow;
+}

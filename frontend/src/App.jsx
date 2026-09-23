@@ -1,27 +1,44 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 import Home from './pages/Home';
-import SellerChats from './pages/seller/SellerChats';
-import StoreSettings from './pages/seller/StoreSettings';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+
+import SellerDashboard from './pages/seller/SellerDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
-import ChatMonitoring from './pages/admin/ChatMonitoring';
-import ListingApproval from './pages/admin/ListingApproval';
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/cadastro" element={<Register />} />
 
-        <Route path="/loja/atendimentos" element={<SellerChats />} />
-        <Route path="/loja/configuracoes" element={<StoreSettings />} />
+          <Route
+            path="/loja"
+            element={
+              <ProtectedRoute>
+                <SellerDashboard />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/chats" element={<ChatMonitoring />} />
-        <Route path="/admin/anuncios/aprovacao" element={<ListingApproval />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute roles={['ADMIN', 'SUPPORT']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route path="*" element={<Home />} />
-      </Routes>
-    </BrowserRouter>
+          <Route path="*" element={<Home />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

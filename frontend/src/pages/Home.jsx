@@ -1,8 +1,22 @@
 import { useEffect, useState } from 'react';
 import Header from '../components/common/Header';
-import Banner from '../components/common/Banner';
 import FloatingAIChat from '../components/common/FloatingAIChat';
 import { applyTheme } from '../services/themeRegistry';
+
+function ProductCard({ item }) {
+  return (
+    <div className="card p-5 flex flex-col">
+      <h3 className="font-semibold text-gray-900 mb-1">{item.title}</h3>
+      <p className="text-sm text-gray-500 mb-4 line-clamp-2">{item.description}</p>
+      <div className="mt-auto flex items-center justify-between">
+        <span className="text-2xl font-extrabold text-pink-neon">
+          R$ {Number(item.price).toFixed(2)}
+        </span>
+        <button className="btn-primary text-sm">Adquirir Tela</button>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [settings, setSettings] = useState({ aiChatEnabled: true, homepageOrder: ['OWN', 'THIRD_PARTY'] });
@@ -37,52 +51,50 @@ export default function Home() {
   }
 
   const sections = {
-    OWN: {
-      title: 'Assine com o Divide Aí',
-      data: ownListings
-    },
-    THIRD_PARTY: {
-      title: 'Contas de Clientes',
-      data: thirdPartyListings
-    }
+    OWN: { title: 'Assine com o Divide Aí', data: ownListings },
+    THIRD_PARTY: { title: 'Divide Aí com a Galera', data: thirdPartyListings }
   };
 
   return (
-    <div>
+    <div className="min-h-screen bg-white">
       <Header />
-      <Banner />
 
-      <section className="da-container" style={{ marginTop: 28 }}>
-        <h2 style={{ fontSize: 18, marginBottom: 12 }}>Categorias</h2>
-        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6 }}>
-          {categories.map(cat => (
-            <button key={cat.id} className="da-btn da-btn-outline" style={{ whiteSpace: 'nowrap' }}>
-              {cat.name}
-            </button>
-          ))}
-        </div>
-      </section>
+      <main className="max-w-7xl mx-auto px-4">
+        <section className="pt-6">
+          <div className="rounded-2xl bg-gradient-to-br from-pink-neon to-pink-light p-8 md:p-12 text-white">
+            <h1 className="text-2xl md:text-4xl font-extrabold">
+              Assinaturas e contas com garantia de 15 dias
+            </h1>
+            <p className="mt-2 text-white/90 text-sm md:text-lg">
+              Compre e venda com segurança no Divide Aí
+            </p>
+          </div>
+        </section>
 
-      {settings.homepageOrder.map(key => (
-        <section key={key} className="da-container" style={{ marginTop: 32 }}>
-          <h2 style={{ fontSize: 20, marginBottom: 14 }}>{sections[key].title}</h2>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-            gap: 16
-          }}>
-            {sections[key].data.map(item => (
-              <div key={item.id} className="da-card">
-                <h3 style={{ fontSize: 15, margin: '0 0 6px' }}>{item.title}</h3>
-                <p style={{ fontSize: 13, color: 'var(--da-text-muted)', margin: '0 0 10px' }}>
-                  {item.description?.slice(0, 60)}...
-                </p>
-                <strong style={{ color: 'var(--da-primary)' }}>R$ {Number(item.price).toFixed(2)}</strong>
-              </div>
+        <section className="pt-8">
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {categories.map(cat => (
+              <button key={cat.id} className="btn-outline text-sm whitespace-nowrap">
+                {cat.name}
+              </button>
             ))}
           </div>
         </section>
-      ))}
+
+        {settings.homepageOrder.map(key => (
+          <section key={key} className="pt-10 pb-4">
+            <h2 className="text-xl font-bold text-gray-900 mb-5">{sections[key].title}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {sections[key].data.map(item => (
+                <ProductCard key={item.id} item={item} />
+              ))}
+              {sections[key].data.length === 0 && (
+                <p className="text-sm text-gray-400 col-span-full">Nenhum anúncio disponível no momento.</p>
+              )}
+            </div>
+          </section>
+        ))}
+      </main>
 
       <FloatingAIChat enabled={settings.aiChatEnabled} />
     </div>

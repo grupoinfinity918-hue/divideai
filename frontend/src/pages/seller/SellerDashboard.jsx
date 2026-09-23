@@ -1,0 +1,44 @@
+import { useState } from 'react';
+import Header from '../../components/common/Header';
+import KanbanBoard from '../../components/crm/KanbanBoard';
+import ProductForm from '../../components/seller/ProductForm';
+import WalletPanel from '../../components/seller/WalletPanel';
+
+const TABS = [
+  { key: 'chats', label: 'Atendimentos' },
+  { key: 'new', label: 'Anunciar Novo Produto' },
+  { key: 'wallet', label: 'Carteira' }
+];
+
+export default function SellerDashboard() {
+  const [tab, setTab] = useState('chats');
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Header />
+      <main className="max-w-7xl mx-auto px-4 pt-8 pb-16">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Painel da Loja</h1>
+
+        <div className="flex gap-2 border-b border-pink-100 mb-6">
+          {TABS.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+                tab === t.key
+                  ? 'border-pink-neon text-pink-neon'
+                  : 'border-transparent text-gray-500 hover:text-pink-neon'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'chats' && <KanbanBoard />}
+        {tab === 'new' && <ProductForm />}
+        {tab === 'wallet' && <WalletPanel />}
+      </main>
+    </div>
+  );
+}

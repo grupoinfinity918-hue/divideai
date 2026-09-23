@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { authHeader } from '../../context/AuthContext';
 
 const COLUMNS = [
   { key: 'AWAITING_SHIPMENT', label: 'Aguardando Envio' },
@@ -17,7 +17,7 @@ export default function KanbanBoard() {
   }, []);
 
   async function loadChats() {
-    const res = await fetch('/api/chats/mine');
+    const res = await fetch('/api/chats/mine', { headers: authHeader() });
     if (res.ok) setChats(await res.json());
   }
 
@@ -25,7 +25,7 @@ export default function KanbanBoard() {
     setChats(prev => prev.map(c => (c.protocol === protocol ? { ...c, status } : c)));
     await fetch(`/api/chats/${protocol}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify({ status })
     });
   }
@@ -36,45 +36,35 @@ export default function KanbanBoard() {
   }
 
   return (
-    <div style={{ display: 'flex', gap: 16, overflowX: 'auto', padding: 16 }}>
+    <div className="flex gap-4 overflow-x-auto pb-2">
       {COLUMNS.map(col => (
         <div
           key={col.key}
           onDragOver={e => e.preventDefault()}
           onDrop={() => handleDrop(col.key)}
-          style={{
-            minWidth: 260,
-            background: 'var(--da-surface)',
-            borderRadius: 'var(--da-radius)',
-            border: '1px solid var(--da-border)',
-            padding: 12
-          }}
+          className="min-w-[260px] bg-pink-soft border border-pink-100 rounded-2xl p-3"
         >
-          <h3 style={{ fontSize: 14, marginBottom: 10, color: 'var(--da-primary)' }}>{col.label}</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <h3 className="text-sm font-bold text-pink-neon mb-3">{col.label}</h3>
+          <div className="flex flex-col gap-3">
             {chats.filter(c => c.status === col.key).map(chat => (
               <div
                 key={chat.id}
                 draggable
                 onDragStart={() => setDraggingId(chat.protocol)}
-                className="da-card"
-                style={{ cursor: 'grab', padding: 10 }}
+                className="card p-3 cursor-grab"
               >
-                <div style={{ fontWeight: 700, fontSize: 13 }}>{chat.protocol}</div>
-                <div style={{ fontSize: 12, color: 'var(--da-text-muted)' }}>
+                <div className="font-bold text-sm">{chat.protocol}</div>
+                <div className="text-xs text-gray-500">
                   {chat.order?.amount ? `R$ ${Number(chat.order.amount).toFixed(2)}` : ''}
                 </div>
-                <div style={{ fontSize: 12, marginTop: 4 }}>
+                <div className="text-xs mt-1 text-gray-600">
                   {chat.messages?.[0]?.content?.slice(0, 40) || 'Sem mensagens ainda'}
                 </div>
-                <Link
-                  to={`/loja/chats/${chat.protocol}`}
-                  style={{ fontSize: 12, color: 'var(--da-primary)', display: 'inline-block', marginTop: 6 }}
-                >
-                  Abrir conversa
-                </Link>
               </div>
             ))}
+            {chats.filter(c => c.status === col.key).length === 0 && (
+              <p className="text-xs text-gray-400">Nenhum atendimento aqui.</p>
+            )}
           </div>
         </div>
       ))}

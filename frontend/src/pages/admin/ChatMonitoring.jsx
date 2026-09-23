@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { authHeader } from '../../context/AuthContext';
 
 export default function ChatMonitoring() {
   const [search, setSearch] = useState('');
@@ -11,17 +12,17 @@ export default function ChatMonitoring() {
   }, []);
 
   async function loadChats() {
-    const res = await fetch('/api/admin/chats');
+    const res = await fetch('/api/admin/chats', { headers: authHeader() });
     if (res.ok) setChats(await res.json());
   }
 
   async function openChat(protocol) {
-    const res = await fetch(`/api/chats/${protocol}`);
+    const res = await fetch(`/api/chats/${protocol}`, { headers: authHeader() });
     if (res.ok) setActiveChat(await res.json());
   }
 
   async function enterTripartite(protocol) {
-    await fetch(`/api/chats/${protocol}/tripartite`, { method: 'POST' });
+    await fetch(`/api/chats/${protocol}/tripartite`, { method: 'POST', headers: authHeader() });
     openChat(protocol);
   }
 
@@ -29,7 +30,7 @@ export default function ChatMonitoring() {
     if (!input.trim() || !activeChat) return;
     await fetch(`/api/chats/${activeChat.protocol}/messages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify({ content: input })
     });
     setInput('');
@@ -39,67 +40,74 @@ export default function ChatMonitoring() {
   const filtered = chats.filter(c => c.protocol.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="da-container" style={{ paddingTop: 24, display: 'flex', gap: 20 }}>
-      <div style={{ width: 300 }}>
-        <h2 style={{ fontSize: 18 }}>Monitoria de Chats</h2>
-        <input
-          placeholder="Buscar por protocolo..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ width: '100%', padding: 8, borderRadius: 'var(--da-radius-sm)', border: '1px solid var(--da-border)', marginBottom: 12 }}
-        />
-        <div style={{ display: 'grid', gap: 8, maxHeight: 500, overflowY: 'auto' }}>
-          {filtered.map(chat => (
-            <div key={chat.id} className="da-card" style={{ padding: 10, cursor: 'pointer' }} onClick={() => openChat(chat.protocol)}>
-              <div style={{ fontWeight: 700, fontSize: 13 }}>{chat.protocol}</div>
-              <div style={{ fontSize: 12, color: 'var(--da-text-muted)' }}>Status: {chat.status}</div>
-            </div>
-          ))}
+    <div>
+      <h2 className="text-lg font-bold text-gray-900 mb-4">Monitoria de Chats</h2>
+      <div className="flex gap-6">
+        <div className="w-72 flex-shrink-0">
+          <input
+            placeholder="Buscar por protocolo..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full border border-pink-100 rounded-xl px-3 py-2 mb-3 text-sm"
+          />
+          <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto">
+            {filtered.map(chat => (
+              <div
+                key={chat.id}
+                onClick={() => openChat(chat.protocol)}
+                className="card p-3 cursor-pointer"
+              >
+                <p className="font-bold text-sm">{chat.protocol}</p>
+                <p className="text-xs text-gray-500">Status: {chat.status}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div style={{ flex: 1 }}>
-        {activeChat ? (
-          <div className="da-card" style={{ height: 560, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3>{activeChat.protocol} {activeChat.tripartite && '— Tripartite'}</h3>
-              {!activeChat.tripartite && (
-                <button className="da-btn" onClick={() => enterTripartite(activeChat.protocol)}>
-                  Entrar na conversa (Tripartite)
-                </button>
+        <div className="flex-1">
+          {activeChat ? (
+            <div className="card p-5 h-[560px] flex flex-col">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-bold">{activeChat.protocol} {activeChat.tripartite && '— Tripartite'}</h3>
+                {!activeChat.tripartite && (
+                  <button className="btn-primary text-sm" onClick={() => enterTripartite(activeChat.protocol)}>
+                    Entrar na conversa (Tripartite)
+                  </button>
+                )}
+              </div>
+              <div className="flex-1 overflow-y-auto flex flex-col gap-2">
+                {activeChat.messages?.map(m => (
+                  <div
+                    key={m.id}
+                    className={`max-w-[80%] rounded-xl px-3 py-2 text-sm border border-pink-100 ${
+                      m.senderType === 'SUPPORT'
+                        ? 'self-center bg-pink-soft'
+                        : m.senderType === 'CLIENT'
+                        ? 'self-start bg-white'
+                        : 'self-end bg-white'
+                    }`}
+                  >
+                    <span className="block text-[11px] text-gray-400 font-semibold">{m.senderType}</span>
+                    {m.content}
+                  </div>
+                ))}
+              </div>
+              {activeChat.tripartite && (
+                <div className="flex gap-2 mt-3">
+                  <input
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    placeholder="Mensagem do suporte..."
+                    className="flex-1 border border-pink-100 rounded-xl px-3 py-2 text-sm"
+                  />
+                  <button className="btn-primary text-sm" onClick={sendSupportMessage}>Enviar</button>
+                </div>
               )}
             </div>
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-              {activeChat.messages?.map(m => (
-                <div key={m.id} style={{
-                  alignSelf: m.senderType === 'SUPPORT' ? 'center' : m.senderType === 'CLIENT' ? 'flex-start' : 'flex-end',
-                  background: m.senderType === 'SUPPORT' ? '#ffe9f1' : '#fff',
-                  border: '1px solid var(--da-border)',
-                  borderRadius: 10,
-                  padding: '6px 10px',
-                  fontSize: 13,
-                  maxWidth: '80%'
-                }}>
-                  <strong style={{ fontSize: 11, color: 'var(--da-text-muted)' }}>{m.senderType}</strong>
-                  <div>{m.content}</div>
-                </div>
-              ))}
-            </div>
-            {activeChat.tripartite && (
-              <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-                <input
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  placeholder="Mensagem do suporte..."
-                  style={{ flex: 1, padding: 8, borderRadius: 'var(--da-radius-sm)', border: '1px solid var(--da-border)' }}
-                />
-                <button className="da-btn" onClick={sendSupportMessage}>Enviar</button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <p style={{ color: 'var(--da-text-muted)' }}>Selecione um protocolo para visualizar a conversa.</p>
-        )}
+          ) : (
+            <p className="text-sm text-gray-400">Selecione um protocolo para visualizar a conversa.</p>
+          )}
+        </div>
       </div>
     </div>
   );
