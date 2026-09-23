@@ -7,7 +7,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "start": "node src/server.js",
+    "start": "npx prisma db push --accept-data-loss && node src/server.js"
     "build": "prisma generate && npm install --prefix frontend && npm run build --prefix frontend",
     "postinstall": "prisma generate",
     "migrate": "prisma migrate deploy"
