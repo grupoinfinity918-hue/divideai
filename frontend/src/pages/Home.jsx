@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '../components/common/Header';
 import FloatingAIChat from '../components/common/FloatingAIChat';
 import { applyTheme } from '../services/themeRegistry';
 
 function ProductCard({ item }) {
   return (
-    <div className="card p-5 flex flex-col">
+    <div className="card p-5 flex flex-col relative">
+      {item.isPrioritario && (
+        <span className="absolute top-3 right-3 text-[10px] font-bold text-pink-neon bg-pink-soft px-2 py-1 rounded-full">
+          Destaque
+        </span>
+      )}
       <h3 className="font-semibold text-gray-900 mb-1">{item.title}</h3>
       <p className="text-sm text-gray-500 mb-4 line-clamp-2">{item.description}</p>
       <div className="mt-auto flex items-center justify-between">
@@ -15,6 +21,25 @@ function ProductCard({ item }) {
         <button className="btn-primary text-sm">Adquirir Tela</button>
       </div>
     </div>
+  );
+}
+
+function Showcase({ title, data, seeMoreHref }) {
+  return (
+    <section className="pt-10 pb-4">
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+        <Link to={seeMoreHref} className="btn-outline text-sm">Ver Mais</Link>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        {data.map(item => (
+          <ProductCard key={item.id} item={item} />
+        ))}
+        {data.length === 0 && (
+          <p className="text-sm text-gray-400 col-span-full">Nenhum anúncio disponível no momento.</p>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -46,13 +71,13 @@ export default function Home() {
   }
 
   async function loadListings(origin, setter) {
-    const res = await fetch(`/api/listings?origin=${origin}`);
+    const res = await fetch(`/api/listings?origin=${origin}&featured=true&limit=8`);
     if (res.ok) setter(await res.json());
   }
 
   const sections = {
-    OWN: { title: 'Assine com o Divide Aí', data: ownListings },
-    THIRD_PARTY: { title: 'Divide Aí com a Galera', data: thirdPartyListings }
+    OWN: { title: 'Assine com o Divide Aí', data: ownListings, href: '/vitrine/proprias' },
+    THIRD_PARTY: { title: 'Divide Aí com a Galera', data: thirdPartyListings, href: '/vitrine/marketplace' }
   };
 
   return (
@@ -61,14 +86,7 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4">
         <section className="pt-6">
-          <div className="rounded-2xl bg-gradient-to-br from-pink-neon to-pink-light p-8 md:p-12 text-white">
-            <h1 className="text-2xl md:text-4xl font-extrabold">
-              Assinaturas e contas com garantia de 15 dias
-            </h1>
-            <p className="mt-2 text-white/90 text-sm md:text-lg">
-              Compre e venda com segurança no Divide Aí
-            </p>
-          </div>
+          <div className="rounded-2xl bg-gradient-to-br from-pink-neon to-pink-light h-40 md:h-56" />
         </section>
 
         <section className="pt-8">
@@ -82,17 +100,7 @@ export default function Home() {
         </section>
 
         {settings.homepageOrder.map(key => (
-          <section key={key} className="pt-10 pb-4">
-            <h2 className="text-xl font-bold text-gray-900 mb-5">{sections[key].title}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {sections[key].data.map(item => (
-                <ProductCard key={item.id} item={item} />
-              ))}
-              {sections[key].data.length === 0 && (
-                <p className="text-sm text-gray-400 col-span-full">Nenhum anúncio disponível no momento.</p>
-              )}
-            </div>
-          </section>
+          <Showcase key={key} title={sections[key].title} data={sections[key].data} seeMoreHref={sections[key].href} />
         ))}
       </main>
 

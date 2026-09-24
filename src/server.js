@@ -9,6 +9,7 @@ const chatRoutes = require('./routes/chat.routes');
 const walletRoutes = require('./routes/wallet.routes');
 const listingsRoutes = require('./routes/listings.routes');
 const settingsRoutes = require('./routes/settings.routes');
+const usersRoutes = require('./routes/users.routes');
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api', chatRoutes);
 app.use('/api', walletRoutes);
 app.use('/api', listingsRoutes);
 app.use('/api', settingsRoutes);
+app.use('/api', usersRoutes);
 
 const FRONTEND_DIST = path.join(__dirname, '..', 'frontend', 'dist');
 app.use(express.static(FRONTEND_DIST));

@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
 import Home from './pages/Home';
+import ShowcaseFull from './pages/ShowcaseFull';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 
@@ -15,6 +16,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/vitrine/:tipo" element={<ShowcaseFull />} />
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Register />} />
 

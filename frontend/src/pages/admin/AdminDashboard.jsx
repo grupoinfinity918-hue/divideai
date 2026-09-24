@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import Header from '../../components/common/Header';
 import ThemeSelector from '../../components/admin/ThemeSelector';
 import WithdrawalAlerts from '../../components/admin/WithdrawalAlerts';
+import CategoryManager from '../../components/admin/CategoryManager';
+import UserManagement from '../../components/admin/UserManagement';
+import ListingManagement from '../../components/admin/ListingManagement';
 import ChatMonitoring from './ChatMonitoring';
 import ListingApproval from './ListingApproval';
 import { authHeader } from '../../context/AuthContext';
@@ -9,7 +12,10 @@ import { authHeader } from '../../context/AuthContext';
 const TABS = [
   { key: 'withdrawals', label: 'Alertas de Saque' },
   { key: 'chats', label: 'Monitoria de Chats' },
-  { key: 'listings', label: 'Aprovação de Anúncios' },
+  { key: 'approval', label: 'Aprovação de Anúncios' },
+  { key: 'categories', label: 'Gerenciar Categorias' },
+  { key: 'users', label: 'Gestão de Usuários' },
+  { key: 'listings', label: 'Gestão de Anúncios' },
   { key: 'settings', label: 'Configurações' }
 ];
 
@@ -60,7 +66,10 @@ export default function AdminDashboard() {
 
         {tab === 'withdrawals' && <WithdrawalAlerts />}
         {tab === 'chats' && <ChatMonitoring />}
-        {tab === 'listings' && <ListingApproval />}
+        {tab === 'approval' && <ListingApproval />}
+        {tab === 'categories' && <CategoryManager />}
+        {tab === 'users' && <UserManagement />}
+        {tab === 'listings' && <ListingManagement />}
         {tab === 'settings' && (
           <div className="flex flex-col gap-6 max-w-md">
             <div className="card p-5 flex items-center justify-between">
