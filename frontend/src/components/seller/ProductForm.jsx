@@ -7,7 +7,9 @@ export default function ProductForm() {
     categoryId: '',
     title: '',
     price: '',
+    slotsTotal: '',
     description: '',
+    rules: '',
     autoDelivery: false,
     autoDeliveryPayload: ''
   });
@@ -27,7 +29,7 @@ export default function ProductForm() {
     });
     if (res.ok) {
       setStatus('done');
-      setForm({ categoryId: '', title: '', price: '', description: '', autoDelivery: false, autoDeliveryPayload: '' });
+      setForm({ categoryId: '', title: '', price: '', slotsTotal: '', description: '', rules: '', autoDelivery: false, autoDeliveryPayload: '' });
     } else {
       setStatus('error');
     }
@@ -62,16 +64,29 @@ export default function ProductForm() {
         />
       </div>
 
-      <div>
-        <label className="text-sm font-medium text-gray-700">Preço (R$)</label>
-        <input
-          type="number"
-          step="0.01"
-          value={form.price}
-          onChange={e => setForm({ ...form, price: e.target.value })}
-          required
-          className="w-full mt-1 border border-pink-100 rounded-xl px-3 py-2"
-        />
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-sm font-medium text-gray-700">Preço (R$)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={form.price}
+            onChange={e => setForm({ ...form, price: e.target.value })}
+            required
+            className="w-full mt-1 border border-pink-100 rounded-xl px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-700">Quantidade de Vagas</label>
+          <input
+            type="number"
+            min="1"
+            value={form.slotsTotal}
+            onChange={e => setForm({ ...form, slotsTotal: e.target.value })}
+            required
+            className="w-full mt-1 border border-pink-100 rounded-xl px-3 py-2"
+          />
+        </div>
       </div>
 
       <div>
@@ -81,6 +96,17 @@ export default function ProductForm() {
           onChange={e => setForm({ ...form, description: e.target.value })}
           rows={4}
           required
+          className="w-full mt-1 border border-pink-100 rounded-xl px-3 py-2"
+        />
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-gray-700">Regras (opcional)</label>
+        <textarea
+          value={form.rules}
+          onChange={e => setForm({ ...form, rules: e.target.value })}
+          rows={3}
+          placeholder="Ex: não compartilhar a tela, avisar antes de trocar de dispositivo..."
           className="w-full mt-1 border border-pink-100 rounded-xl px-3 py-2"
         />
       </div>

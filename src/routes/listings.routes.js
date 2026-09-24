@@ -38,6 +38,15 @@ router.get('/listings', async (req, res) => {
   res.json(listings);
 });
 
+router.get('/listings/:id', async (req, res) => {
+  const listing = await prisma.listing.findUnique({
+    where: { id: req.params.id },
+    include: { seller: { select: { id: true, name: true } }, category: { select: { name: true } } }
+  });
+  if (!listing) return res.status(404).json({ error: 'Anúncio não encontrado' });
+  res.json(listing);
+});
+
 router.get('/seller/listings', requireAuth, async (req, res) => {
   const listings = await prisma.listing.findMany({
     where: { sellerId: req.user.id },
@@ -47,9 +56,9 @@ router.get('/seller/listings', requireAuth, async (req, res) => {
 });
 
 router.post('/seller/listings', requireAuth, async (req, res) => {
-  const { categoryId, title, description, price, autoDelivery, autoDeliveryPayload } = req.body;
+  const { categoryId, title, description, rules, price, slotsTotal, autoDelivery, autoDeliveryPayload } = req.body;
 
-  if (!categoryId || !title || !description || !price) {
+  if (!categoryId || !title || !description || !price || !slotsTotal) {
     return res.status(400).json({ error: 'Preencha todos os campos obrigatórios' });
   }
 
@@ -60,7 +69,10 @@ router.post('/seller/listings', requireAuth, async (req, res) => {
       origin: 'THIRD_PARTY',
       title,
       description,
+      rules: rules || null,
       price,
+      slotsTotal: Number(slotsTotal),
+      slotsAvailable: Number(slotsTotal),
       autoDelivery: !!autoDelivery,
       autoDeliveryPayload: autoDelivery ? autoDeliveryPayload : null,
       status: 'ACTIVE'

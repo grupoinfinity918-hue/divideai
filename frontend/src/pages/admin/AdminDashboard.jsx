@@ -5,6 +5,7 @@ import WithdrawalAlerts from '../../components/admin/WithdrawalAlerts';
 import CategoryManager from '../../components/admin/CategoryManager';
 import UserManagement from '../../components/admin/UserManagement';
 import ListingManagement from '../../components/admin/ListingManagement';
+import ReportsInbox from '../../components/admin/ReportsInbox';
 import ChatMonitoring from './ChatMonitoring';
 import ListingApproval from './ListingApproval';
 import { authHeader } from '../../context/AuthContext';
@@ -16,6 +17,7 @@ const TABS = [
   { key: 'categories', label: 'Gerenciar Categorias' },
   { key: 'users', label: 'Gestão de Usuários' },
   { key: 'listings', label: 'Gestão de Anúncios' },
+  { key: 'reports', label: 'Denúncias' },
   { key: 'settings', label: 'Configurações' }
 ];
 
@@ -70,6 +72,7 @@ export default function AdminDashboard() {
         {tab === 'categories' && <CategoryManager />}
         {tab === 'users' && <UserManagement />}
         {tab === 'listings' && <ListingManagement />}
+        {tab === 'reports' && <ReportsInbox />}
         {tab === 'settings' && (
           <div className="flex flex-col gap-6 max-w-md">
             <div className="card p-5 flex items-center justify-between">

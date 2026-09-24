@@ -115,6 +115,10 @@ model User {
   reviewsGiven    Review[]         @relation("ReviewAuthor")
   reviewsReceived Review[]         @relation("ReviewTarget")
   withdrawals     WithdrawalRequest[]
+  preSaleChatsAsClient PreSaleChat[] @relation("PreSaleClientChats")
+  preSaleChatsAsSeller PreSaleChat[] @relation("PreSaleSellerChats")
+  reports         Report[]
+  supportChats    SupportChat[]
 }
 
 model Wallet {
@@ -172,6 +176,10 @@ model Listing {
   price          Decimal         @db.Decimal(12, 2)
   status         ListingStatus   @default(ACTIVE)
   isPrioritario  Boolean         @default(false)
+  slotsTotal     Int?
+  slotsAvailable Int?
+  rules          String?
+  billingPeriod  String          @default("mensal")
   autoDelivery   Boolean         @default(false)
   autoDeliveryPayload String?
   createdAt      DateTime        @default(now())
@@ -179,6 +187,7 @@ model Listing {
 
   edits    ListingEdit[]
   orders   Order[]
+  preSaleChats PreSaleChat[]
 }
 
 model ListingEdit {
@@ -297,6 +306,77 @@ model WithdrawalRequest {
   status     WithdrawalStatus @default(PENDING)
   paidAt     DateTime?
   createdAt  DateTime         @default(now())
+}
+
+enum ReportTargetType {
+  LISTING
+  USER
+  CHAT
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+}
+
+model PreSaleChat {
+  id         String              @id @default(uuid())
+  protocol   String              @unique
+  listingId  String
+  listing    Listing             @relation(fields: [listingId], references: [id])
+  clientId   String
+  client     User                @relation("PreSaleClientChats", fields: [clientId], references: [id])
+  sellerId   String
+  seller     User                @relation("PreSaleSellerChats", fields: [sellerId], references: [id])
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  messages   PreSaleMessage[]
+
+  @@unique([listingId, clientId])
+}
+
+model PreSaleMessage {
+  id         String       @id @default(uuid())
+  chatId     String
+  chat       PreSaleChat  @relation(fields: [chatId], references: [id])
+  senderId   String
+  senderType SenderType
+  content    String
+  createdAt  DateTime     @default(now())
+}
+
+model SupportChat {
+  id         String            @id @default(uuid())
+  protocol   String            @unique
+  userId     String
+  user       User              @relation(fields: [userId], references: [id])
+  status     ChatStatus        @default(AWAITING_SHIPMENT)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  messages   SupportMessage[]
+}
+
+model SupportMessage {
+  id         String       @id @default(uuid())
+  chatId     String
+  chat       SupportChat  @relation(fields: [chatId], references: [id])
+  senderId   String
+  senderType SenderType
+  content    String
+  createdAt  DateTime     @default(now())
+}
+
+model Report {
+  id         String            @id @default(uuid())
+  reporterId String
+  reporter   User              @relation(fields: [reporterId], references: [id])
+  targetType ReportTargetType
+  targetId   String
+  reason     String
+  status     ReportStatus      @default(OPEN)
+  createdAt  DateTime          @default(now())
 }
 
 model AdminSettings {

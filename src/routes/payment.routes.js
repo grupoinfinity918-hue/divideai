@@ -36,6 +36,10 @@ async function getEfiToken() {
 router.post('/pix/charge', async (req, res) => {
   const { orderId } = req.body;
 
+  if (!process.env.EFI_CLIENT_ID || !process.env.EFI_CLIENT_SECRET || !process.env.EFI_BASE_URL || !process.env.EFI_PIX_KEY) {
+    return res.status(503).json({ error: 'Pagamentos via Pix ainda não configurados. Configure as credenciais do EFI Bank.' });
+  }
+
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: { listing: true, seller: true }
@@ -43,36 +47,41 @@ router.post('/pix/charge', async (req, res) => {
 
   if (!order) return res.status(404).json({ error: 'Pedido não encontrado' });
 
-  const token = await getEfiToken();
-  const txid = crypto.randomBytes(16).toString('hex').slice(0, 26);
+  try {
+    const token = await getEfiToken();
+    const txid = crypto.randomBytes(16).toString('hex').slice(0, 26);
 
-  const efiRes = await fetch(`${process.env.EFI_BASE_URL}/v2/cob/${txid}`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      calendario: { expiracao: 3600 },
-      valor: { original: Number(order.amount).toFixed(2) },
-      chave: process.env.EFI_PIX_KEY,
-      solicitacaoPagador: `Divide Aí - Pedido ${order.protocol}`
-    })
-  });
+    const efiRes = await fetch(`${process.env.EFI_BASE_URL}/v2/cob/${txid}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        calendario: { expiracao: 3600 },
+        valor: { original: Number(order.amount).toFixed(2) },
+        chave: process.env.EFI_PIX_KEY,
+        solicitacaoPagador: `Divide Aí - Pedido ${order.protocol}`
+      })
+    });
 
-  const cobData = await efiRes.json();
+    const cobData = await efiRes.json();
 
-  await prisma.order.update({
-    where: { id: orderId },
-    data: { pixTxId: txid }
-  });
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { pixTxId: txid }
+    });
 
-  res.json({
-    protocol: order.protocol,
-    txid,
-    pixCopiaCola: cobData.pixCopiaCola,
-    qrcode: cobData.qrcode || null
-  });
+    res.json({
+      protocol: order.protocol,
+      txid,
+      pixCopiaCola: cobData.pixCopiaCola,
+      qrcode: cobData.qrcode || null
+    });
+  } catch (err) {
+    console.error('Erro ao gerar cobrança Pix:', err);
+    res.status(502).json({ error: 'Não foi possível gerar o Pix agora. Tente novamente.' });
+  }
 });
 
 router.post('/pix/webhook', async (req, res) => {

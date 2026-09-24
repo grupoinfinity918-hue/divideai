@@ -1,28 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/common/Header';
+import ProductCard from '../components/common/ProductCard';
 import FloatingAIChat from '../components/common/FloatingAIChat';
 import { applyTheme } from '../services/themeRegistry';
-
-function ProductCard({ item }) {
-  return (
-    <div className="card p-5 flex flex-col relative">
-      {item.isPrioritario && (
-        <span className="absolute top-3 right-3 text-[10px] font-bold text-pink-neon bg-pink-soft px-2 py-1 rounded-full">
-          Destaque
-        </span>
-      )}
-      <h3 className="font-semibold text-gray-900 mb-1">{item.title}</h3>
-      <p className="text-sm text-gray-500 mb-4 line-clamp-2">{item.description}</p>
-      <div className="mt-auto flex items-center justify-between">
-        <span className="text-2xl font-extrabold text-pink-neon">
-          R$ {Number(item.price).toFixed(2)}
-        </span>
-        <button className="btn-primary text-sm">Adquirir Tela</button>
-      </div>
-    </div>
-  );
-}
 
 function Showcase({ title, data, seeMoreHref }) {
   return (

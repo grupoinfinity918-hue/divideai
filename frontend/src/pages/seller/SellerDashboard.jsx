@@ -3,9 +3,11 @@ import Header from '../../components/common/Header';
 import KanbanBoard from '../../components/crm/KanbanBoard';
 import ProductForm from '../../components/seller/ProductForm';
 import WalletPanel from '../../components/seller/WalletPanel';
+import PreSaleInbox from '../../components/seller/PreSaleInbox';
 
 const TABS = [
   { key: 'chats', label: 'Atendimentos' },
+  { key: 'presale', label: 'Dúvidas de Produtos' },
   { key: 'new', label: 'Anunciar Novo Produto' },
   { key: 'wallet', label: 'Carteira' }
 ];
@@ -36,6 +38,7 @@ export default function SellerDashboard() {
         </div>
 
         {tab === 'chats' && <KanbanBoard />}
+        {tab === 'presale' && <PreSaleInbox />}
         {tab === 'new' && <ProductForm />}
         {tab === 'wallet' && <WalletPanel />}
       </main>
