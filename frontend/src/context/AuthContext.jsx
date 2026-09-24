@@ -1,14 +1,39 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const pollRef = useRef(null);
 
   useEffect(() => {
     loadMe();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadUnread();
+      pollRef.current = setInterval(loadUnread, 15000);
+      return () => clearInterval(pollRef.current);
+    }
+    setUnreadCount(0);
+  }, [user]);
+
+  async function loadUnread() {
+    const token = localStorage.getItem('da_token');
+    if (!token) return;
+    try {
+      const res = await fetch('/api/chats/unread-count', { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCount(data.unreadCount || 0);
+      }
+    } catch {
+      // ignora falha de polling
+    }
+  }
 
   async function loadMe() {
     const token = localStorage.getItem('da_token');
@@ -56,7 +81,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, unreadCount, refreshUnread: loadUnread, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

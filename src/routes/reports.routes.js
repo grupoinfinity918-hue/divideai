@@ -22,10 +22,19 @@ router.post('/reports', requireAuth, async (req, res) => {
 router.get('/admin/reports', requireAuth, requireRole(['ADMIN', 'SUPPORT']), async (req, res) => {
   const reports = await prisma.report.findMany({
     where: { status: 'OPEN' },
-    include: { reporter: { select: { name: true, email: true } } },
+    include: { reporter: { select: { id: true, name: true, email: true } } },
     orderBy: { createdAt: 'desc' }
   });
-  res.json(reports);
+
+  const withTarget = await Promise.all(reports.map(async r => {
+    if (r.targetType === 'LISTING') {
+      const listing = await prisma.listing.findUnique({ where: { id: r.targetId }, select: { title: true } });
+      return { ...r, targetLabel: listing?.title || 'Anúncio removido' };
+    }
+    return { ...r, targetLabel: null };
+  }));
+
+  res.json(withTarget);
 });
 
 router.post('/admin/reports/:id/resolve', requireAuth, requireRole(['ADMIN', 'SUPPORT']), async (req, res) => {

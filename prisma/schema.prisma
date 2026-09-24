@@ -98,7 +98,12 @@ model User {
   role          UserRole   @default(CLIENT)
   cpf           String?    @unique
   birthDate     DateTime?
+  address       String?
   idDocUrl      String?
+  avatarUrl     String?
+  storeName     String?
+  storeColor    String?
+  storeBannerUrl String?
   kycStatus     KycStatus  @default(PENDING)
   banned        Boolean    @default(false)
   createdAt     DateTime   @default(now())
@@ -180,6 +185,7 @@ model Listing {
   slotsAvailable Int?
   rules          String?
   billingPeriod  String          @default("mensal")
+  icon           String          @default("tv")
   autoDelivery   Boolean         @default(false)
   autoDeliveryPayload String?
   createdAt      DateTime        @default(now())
@@ -240,6 +246,8 @@ model Chat {
   status     ChatStatus    @default(AWAITING_SHIPMENT)
   tripartite Boolean       @default(false)
   supportId  String?
+  lastReadClient DateTime?
+  lastReadSeller DateTime?
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
@@ -328,6 +336,8 @@ model PreSaleChat {
   client     User                @relation("PreSaleClientChats", fields: [clientId], references: [id])
   sellerId   String
   seller     User                @relation("PreSaleSellerChats", fields: [sellerId], references: [id])
+  lastReadClient DateTime?
+  lastReadSeller DateTime?
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
 
@@ -352,6 +362,8 @@ model SupportChat {
   userId     String
   user       User              @relation(fields: [userId], references: [id])
   status     ChatStatus        @default(AWAITING_SHIPMENT)
+  lastReadUser DateTime?
+  lastReadSupport DateTime?
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
 

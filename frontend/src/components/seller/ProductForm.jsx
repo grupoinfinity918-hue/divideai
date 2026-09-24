@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { authHeader } from '../../context/AuthContext';
+import { ICON_MAP } from '../common/ProductCard';
 
 export default function ProductForm() {
   const [categories, setCategories] = useState([]);
@@ -10,6 +11,7 @@ export default function ProductForm() {
     slotsTotal: '',
     description: '',
     rules: '',
+    icon: 'tv',
     autoDelivery: false,
     autoDeliveryPayload: ''
   });
@@ -29,7 +31,7 @@ export default function ProductForm() {
     });
     if (res.ok) {
       setStatus('done');
-      setForm({ categoryId: '', title: '', price: '', slotsTotal: '', description: '', rules: '', autoDelivery: false, autoDeliveryPayload: '' });
+      setForm({ categoryId: '', title: '', price: '', slotsTotal: '', description: '', rules: '', icon: 'tv', autoDelivery: false, autoDeliveryPayload: '' });
     } else {
       setStatus('error');
     }
@@ -62,6 +64,24 @@ export default function ProductForm() {
           required
           className="w-full mt-1 border border-pink-100 rounded-xl px-3 py-2"
         />
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-gray-700">Ícone do Produto</label>
+        <div className="flex gap-2 flex-wrap mt-1">
+          {Object.entries(ICON_MAP).map(([key, emoji]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setForm({ ...form, icon: key })}
+              className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl border-2 ${
+                form.icon === key ? 'border-pink-neon bg-pink-soft' : 'border-pink-100'
+              }`}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

@@ -26,6 +26,42 @@ router.post('/support-chats', requireAuth, async (req, res) => {
   res.status(201).json(chat);
 });
 
+router.get('/support-chats/mine', requireAuth, async (req, res) => {
+  const chats = await prisma.supportChat.findMany({
+    where: { userId: req.user.id },
+    include: { messages: { orderBy: { createdAt: 'desc' }, take: 1 } },
+    orderBy: { updatedAt: 'desc' }
+  });
+
+  const withUnread = await Promise.all(chats.map(async chat => {
+    const unreadCount = await prisma.supportMessage.count({
+      where: {
+        chatId: chat.id,
+        senderType: { not: 'CLIENT' },
+        ...(chat.lastReadUser ? { createdAt: { gt: chat.lastReadUser } } : {})
+      }
+    });
+    return { ...chat, unreadCount };
+  }));
+
+  res.json(withUnread);
+});
+
+router.post('/admin/support-chats/with/:userId', requireAuth, requireRole(['ADMIN', 'SUPPORT']), async (req, res) => {
+  let chat = await prisma.supportChat.findFirst({
+    where: { userId: req.params.userId, status: { not: 'COMPLETED' } },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  if (!chat) {
+    chat = await prisma.supportChat.create({
+      data: { protocol: generateProtocol(), userId: req.params.userId }
+    });
+  }
+
+  res.status(201).json(chat);
+});
+
 router.get('/support-chats/:id', requireAuth, async (req, res) => {
   const chat = await prisma.supportChat.findUnique({
     where: { id: req.params.id },
@@ -36,6 +72,12 @@ router.get('/support-chats/:id', requireAuth, async (req, res) => {
   const isOwner = chat.userId === req.user.id;
   const isStaff = ['ADMIN', 'SUPPORT'].includes(req.user.role);
   if (!isOwner && !isStaff) return res.status(403).json({ error: 'Acesso negado' });
+
+  if (isOwner) {
+    await prisma.supportChat.update({ where: { id: chat.id }, data: { lastReadUser: new Date() } });
+  } else if (isStaff) {
+    await prisma.supportChat.update({ where: { id: chat.id }, data: { lastReadSupport: new Date() } });
+  }
 
   res.json(chat);
 });

@@ -44,7 +44,21 @@ router.get('/presale-chats/mine', requireAuth, async (req, res) => {
     },
     orderBy: { updatedAt: 'desc' }
   });
-  res.json(chats);
+
+  const withUnread = await Promise.all(chats.map(async chat => {
+    const isClient = chat.clientId === req.user.id;
+    const lastRead = isClient ? chat.lastReadClient : chat.lastReadSeller;
+    const unreadCount = await prisma.preSaleMessage.count({
+      where: {
+        chatId: chat.id,
+        senderType: isClient ? { not: 'CLIENT' } : { not: 'SELLER' },
+        ...(lastRead ? { createdAt: { gt: lastRead } } : {})
+      }
+    });
+    return { ...chat, unreadCount };
+  }));
+
+  res.json(withUnread);
 });
 
 router.get('/presale-chats/:id', requireAuth, async (req, res) => {
@@ -56,6 +70,12 @@ router.get('/presale-chats/:id', requireAuth, async (req, res) => {
   if (!chat) return res.status(404).json({ error: 'Chat não encontrado' });
   if (![chat.clientId, chat.sellerId].includes(req.user.id)) {
     return res.status(403).json({ error: 'Acesso negado' });
+  }
+
+  if (req.user.id === chat.clientId) {
+    await prisma.preSaleChat.update({ where: { id: chat.id }, data: { lastReadClient: new Date() } });
+  } else {
+    await prisma.preSaleChat.update({ where: { id: chat.id }, data: { lastReadSeller: new Date() } });
   }
 
   res.json(chat);

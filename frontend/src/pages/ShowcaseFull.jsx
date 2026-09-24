@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import Header from '../components/common/Header';
 import ProductCard from '../components/common/ProductCard';
 
@@ -10,15 +10,19 @@ const CONFIG = {
 
 export default function ShowcaseFull() {
   const { tipo } = useParams();
+  const [searchParams] = useSearchParams();
+  const categoria = searchParams.get('categoria');
   const config = CONFIG[tipo] || CONFIG.marketplace;
   const [listings, setListings] = useState([]);
 
   useEffect(() => {
-    fetch(`/api/listings?origin=${config.origin}`)
+    const params = new URLSearchParams({ origin: config.origin });
+    if (categoria) params.set('category', categoria);
+    fetch(`/api/listings?${params.toString()}`)
       .then(r => r.json())
       .then(setListings)
       .catch(() => {});
-  }, [tipo]);
+  }, [tipo, categoria]);
 
   return (
     <div className="min-h-screen bg-white">

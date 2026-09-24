@@ -29,9 +29,14 @@ router.delete('/admin/categories/:id', requireAuth, requireRole(['ADMIN']), asyn
 });
 
 router.get('/listings', async (req, res) => {
-  const { origin, featured, limit } = req.query;
+  const { origin, featured, limit, category } = req.query;
   const listings = await prisma.listing.findMany({
-    where: { status: 'ACTIVE', ...(origin ? { origin } : {}) },
+    where: {
+      status: 'ACTIVE',
+      ...(origin ? { origin } : {}),
+      ...(category ? { category: { slug: category } } : {})
+    },
+    include: { category: { select: { name: true, slug: true } } },
     orderBy: [{ isPrioritario: 'desc' }, { createdAt: 'desc' }],
     ...(featured && limit ? { take: Number(limit) } : {})
   });
@@ -56,7 +61,7 @@ router.get('/seller/listings', requireAuth, async (req, res) => {
 });
 
 router.post('/seller/listings', requireAuth, async (req, res) => {
-  const { categoryId, title, description, rules, price, slotsTotal, autoDelivery, autoDeliveryPayload } = req.body;
+  const { categoryId, title, description, rules, price, slotsTotal, icon, autoDelivery, autoDeliveryPayload } = req.body;
 
   if (!categoryId || !title || !description || !price || !slotsTotal) {
     return res.status(400).json({ error: 'Preencha todos os campos obrigatórios' });
@@ -73,6 +78,7 @@ router.post('/seller/listings', requireAuth, async (req, res) => {
       price,
       slotsTotal: Number(slotsTotal),
       slotsAvailable: Number(slotsTotal),
+      icon: icon || 'tv',
       autoDelivery: !!autoDelivery,
       autoDeliveryPayload: autoDelivery ? autoDeliveryPayload : null,
       status: 'ACTIVE'
@@ -80,6 +86,109 @@ router.post('/seller/listings', requireAuth, async (req, res) => {
   });
 
   res.status(201).json(listing);
+});
+
+router.delete('/seller/listings/:id', requireAuth, async (req, res) => {
+  const listing = await prisma.listing.findUnique({ where: { id: req.params.id } });
+  if (!listing || listing.sellerId !== req.user.id) return res.status(404).json({ error: 'Anúncio não encontrado' });
+  await prisma.listing.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
+router.patch('/seller/listings/:id', requireAuth, async (req, res) => {
+  const listing = await prisma.listing.findUnique({ where: { id: req.params.id } });
+  if (!listing || listing.sellerId !== req.user.id) return res.status(404).json({ error: 'Anúncio não encontrado' });
+
+  const { title, description, rules, price, slotsTotal, icon, categoryId } = req.body;
+  const afterData = {
+    ...(title ? { title } : {}),
+    ...(description ? { description } : {}),
+    ...(rules !== undefined ? { rules } : {}),
+    ...(price ? { price: Number(price) } : {}),
+    ...(slotsTotal ? { slotsTotal: Number(slotsTotal), slotsAvailable: Number(slotsTotal) } : {}),
+    ...(icon ? { icon } : {}),
+    ...(categoryId ? { categoryId } : {})
+  };
+
+  const beforeData = {
+    title: listing.title,
+    description: listing.description,
+    rules: listing.rules,
+    price: Number(listing.price),
+    slotsTotal: listing.slotsTotal,
+    icon: listing.icon,
+    categoryId: listing.categoryId
+  };
+
+  const edit = await prisma.listingEdit.create({
+    data: { listingId: listing.id, beforeData, afterData, status: 'PENDING_APPROVAL' }
+  });
+
+  res.status(201).json({ ok: true, pendingApproval: true, edit });
+});
+
+router.get('/sellers/:id/store', async (req, res) => {
+  const seller = await prisma.user.findUnique({
+    where: { id: req.params.id },
+    select: { id: true, name: true, avatarUrl: true, storeName: true, storeColor: true, storeBannerUrl: true, createdAt: true }
+  });
+  if (!seller) return res.status(404).json({ error: 'Vendedor não encontrado' });
+
+  const listings = await prisma.listing.findMany({
+    where: { sellerId: seller.id, status: 'ACTIVE' },
+    orderBy: [{ isPrioritario: 'desc' }, { createdAt: 'desc' }]
+  });
+
+  const reviews = await prisma.review.findMany({
+    where: { targetId: seller.id },
+    include: { author: { select: { name: true, avatarUrl: true } } },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  const avg = reviews.length ? reviews.reduce((s, r) => s + r.stars, 0) / reviews.length : null;
+
+  res.json({ seller, listings, reviews, ratingAverage: avg, ratingCount: reviews.length });
+});
+
+router.patch('/seller/store', requireAuth, async (req, res) => {
+  const { storeName, storeColor, storeBannerUrl, avatarUrl } = req.body;
+  const updated = await prisma.user.update({
+    where: { id: req.user.id },
+    data: {
+      ...(storeName !== undefined ? { storeName } : {}),
+      ...(storeColor !== undefined ? { storeColor } : {}),
+      ...(storeBannerUrl !== undefined ? { storeBannerUrl } : {}),
+      ...(avatarUrl !== undefined ? { avatarUrl } : {})
+    }
+  });
+  res.json(updated);
+});
+
+router.patch('/profile/avatar', requireAuth, async (req, res) => {
+  const { avatarUrl } = req.body;
+  const updated = await prisma.user.update({ where: { id: req.user.id }, data: { avatarUrl } });
+  res.json({ avatarUrl: updated.avatarUrl });
+});
+
+router.post('/seller/kyc', requireAuth, async (req, res) => {
+  const { fullName, cpf, birthDate, address } = req.body;
+  if (!fullName || !cpf || !birthDate || !address) {
+    return res.status(400).json({ error: 'Preencha nome completo, CPF, data de nascimento e endereço' });
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: req.user.id },
+    data: {
+      name: fullName,
+      cpf,
+      birthDate: new Date(birthDate),
+      address,
+      role: 'SELLER',
+      kycStatus: 'APPROVED'
+    }
+  });
+
+  res.json({ id: updated.id, name: updated.name, role: updated.role });
 });
 
 router.get('/seller/profile', requireAuth, async (req, res) => {

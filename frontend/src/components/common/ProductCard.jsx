@@ -1,5 +1,16 @@
 import { useNavigate } from 'react-router-dom';
 
+export const ICON_MAP = {
+  tv: '📺',
+  filme: '🎬',
+  jogo: '🎮',
+  bola: '⚽',
+  musica: '🎵',
+  ia: '🤖',
+  livro: '📚',
+  outro: '⭐'
+};
+
 export default function ProductCard({ item }) {
   const navigate = useNavigate();
 
@@ -15,7 +26,7 @@ export default function ProductCard({ item }) {
       )}
 
       <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-neon to-pink-light flex items-center justify-center text-2xl mb-3">
-        🎬
+        {ICON_MAP[item.icon] || ICON_MAP.tv}
       </div>
 
       <h3 className="font-bold text-gray-900">{item.title}</h3>

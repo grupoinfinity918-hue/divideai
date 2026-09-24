@@ -29,13 +29,17 @@ export default function Home() {
   const [ownListings, setOwnListings] = useState([]);
   const [thirdPartyListings, setThirdPartyListings] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [activeCategory, setActiveCategory] = useState(null);
 
   useEffect(() => {
     loadSettings();
     loadCategories();
-    loadListings('OWN', setOwnListings);
-    loadListings('THIRD_PARTY', setThirdPartyListings);
   }, []);
+
+  useEffect(() => {
+    loadListings('OWN', setOwnListings, activeCategory);
+    loadListings('THIRD_PARTY', setThirdPartyListings, activeCategory);
+  }, [activeCategory]);
 
   async function loadSettings() {
     const res = await fetch('/api/settings');
@@ -51,8 +55,15 @@ export default function Home() {
     if (res.ok) setCategories(await res.json());
   }
 
-  async function loadListings(origin, setter) {
-    const res = await fetch(`/api/listings?origin=${origin}&featured=true&limit=8`);
+  async function loadListings(origin, setter, categorySlug) {
+    const params = new URLSearchParams({ origin });
+    if (!categorySlug) {
+      params.set('featured', 'true');
+      params.set('limit', '8');
+    } else {
+      params.set('category', categorySlug);
+    }
+    const res = await fetch(`/api/listings?${params.toString()}`);
     if (res.ok) setter(await res.json());
   }
 
@@ -72,8 +83,18 @@ export default function Home() {
 
         <section className="pt-8">
           <div className="flex gap-3 overflow-x-auto pb-2">
+            <button
+              onClick={() => setActiveCategory(null)}
+              className={!activeCategory ? 'btn-primary text-sm whitespace-nowrap' : 'btn-outline text-sm whitespace-nowrap'}
+            >
+              Todas
+            </button>
             {categories.map(cat => (
-              <button key={cat.id} className="btn-outline text-sm whitespace-nowrap">
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.slug)}
+                className={activeCategory === cat.slug ? 'btn-primary text-sm whitespace-nowrap' : 'btn-outline text-sm whitespace-nowrap'}
+              >
                 {cat.name}
               </button>
             ))}
@@ -81,7 +102,12 @@ export default function Home() {
         </section>
 
         {settings.homepageOrder.map(key => (
-          <Showcase key={key} title={sections[key].title} data={sections[key].data} seeMoreHref={sections[key].href} />
+          <Showcase
+            key={key}
+            title={sections[key].title}
+            data={sections[key].data}
+            seeMoreHref={activeCategory ? `/vitrine/${key === 'OWN' ? 'proprias' : 'marketplace'}?categoria=${activeCategory}` : sections[key].href}
+          />
         ))}
       </main>
 

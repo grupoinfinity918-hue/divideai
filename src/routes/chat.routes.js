@@ -46,7 +46,20 @@ router.get('/chats/mine', requireAuth, async (req, res) => {
     }
   });
 
-  res.json(chats);
+  const withUnread = await Promise.all(chats.map(async chat => {
+    const isClient = chat.clientId === userId;
+    const lastRead = isClient ? chat.lastReadClient : chat.lastReadSeller;
+    const unreadCount = await prisma.chatMessage.count({
+      where: {
+        chatId: chat.id,
+        senderType: isClient ? { not: 'CLIENT' } : { not: 'SELLER' },
+        ...(lastRead ? { createdAt: { gt: lastRead } } : {})
+      }
+    });
+    return { ...chat, unreadCount };
+  }));
+
+  res.json(withUnread);
 });
 
 router.get('/chats/:protocol', requireAuth, async (req, res) => {
@@ -60,6 +73,12 @@ router.get('/chats/:protocol', requireAuth, async (req, res) => {
   const isParty = [chat.clientId, chat.sellerId].includes(req.user.id);
   const isStaff = ['ADMIN', 'SUPPORT'].includes(req.user.role);
   if (!isParty && !isStaff) return res.status(403).json({ error: 'Acesso negado' });
+
+  if (req.user.id === chat.clientId) {
+    await prisma.chat.update({ where: { id: chat.id }, data: { lastReadClient: new Date() } });
+  } else if (req.user.id === chat.sellerId) {
+    await prisma.chat.update({ where: { id: chat.id }, data: { lastReadSeller: new Date() } });
+  }
 
   res.json(chat);
 });
@@ -141,6 +160,74 @@ router.get('/admin/chats', requireAuth, requireRole(['ADMIN', 'SUPPORT']), async
     include: { order: { select: { protocol: true, amount: true, status: true } } }
   });
   res.json(chats);
+});
+
+router.get('/admin/chats-all', requireAuth, requireRole(['ADMIN', 'SUPPORT']), async (req, res) => {
+  const [sales, presale, support] = await Promise.all([
+    prisma.chat.findMany({
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        client: { select: { name: true } },
+        seller: { select: { name: true } },
+        order: { select: { protocol: true, amount: true } }
+      }
+    }),
+    prisma.preSaleChat.findMany({
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        client: { select: { name: true } },
+        seller: { select: { name: true } },
+        listing: { select: { title: true } }
+      }
+    }),
+    prisma.supportChat.findMany({
+      where: { status: { not: 'COMPLETED' } },
+      orderBy: { updatedAt: 'desc' },
+      include: { user: { select: { name: true } } }
+    })
+  ]);
+
+  res.json({
+    sales: sales.map(c => ({ id: c.id, protocol: c.protocol, kind: 'VENDA', client: c.client.name, seller: c.seller.name, status: c.status })),
+    presale: presale.map(c => ({ id: c.id, protocol: c.protocol, kind: 'DUVIDA', client: c.client.name, seller: c.seller.name, title: c.listing.title })),
+    support: support.map(c => ({ id: c.id, protocol: c.protocol, kind: 'SUPORTE', user: c.user.name, status: c.status }))
+  });
+});
+
+router.get('/chats/unread-count', requireAuth, async (req, res) => {
+  const userId = req.user.id;
+
+  const [saleChats, presaleChats, supportChats] = await Promise.all([
+    prisma.chat.findMany({ where: { OR: [{ clientId: userId }, { sellerId: userId }] } }),
+    prisma.preSaleChat.findMany({ where: { OR: [{ clientId: userId }, { sellerId: userId }] } }),
+    prisma.supportChat.findMany({ where: { userId } })
+  ]);
+
+  let total = 0;
+
+  for (const chat of saleChats) {
+    const isClient = chat.clientId === userId;
+    const lastRead = isClient ? chat.lastReadClient : chat.lastReadSeller;
+    total += await prisma.chatMessage.count({
+      where: { chatId: chat.id, senderType: isClient ? { not: 'CLIENT' } : { not: 'SELLER' }, ...(lastRead ? { createdAt: { gt: lastRead } } : {}) }
+    });
+  }
+
+  for (const chat of presaleChats) {
+    const isClient = chat.clientId === userId;
+    const lastRead = isClient ? chat.lastReadClient : chat.lastReadSeller;
+    total += await prisma.preSaleMessage.count({
+      where: { chatId: chat.id, senderType: isClient ? { not: 'CLIENT' } : { not: 'SELLER' }, ...(lastRead ? { createdAt: { gt: lastRead } } : {}) }
+    });
+  }
+
+  for (const chat of supportChats) {
+    total += await prisma.supportMessage.count({
+      where: { chatId: chat.id, senderType: { not: 'CLIENT' }, ...(chat.lastReadUser ? { createdAt: { gt: chat.lastReadUser } } : {}) }
+    });
+  }
+
+  res.json({ unreadCount: total });
 });
 
 module.exports = router;

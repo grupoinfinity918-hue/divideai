@@ -7,8 +7,12 @@ import ShowcaseFull from './pages/ShowcaseFull';
 import ProductDetail from './pages/ProductDetail';
 import Checkout from './pages/Checkout';
 import MyPurchases from './pages/MyPurchases';
+import MyChatsPage from './pages/MyChatsPage';
+import SaleChatPage from './pages/SaleChatPage';
 import PreSaleChatPage from './pages/PreSaleChatPage';
 import SupportChatPage from './pages/SupportChatPage';
+import SellerStorePage from './pages/SellerStorePage';
+import ProfileSettings from './pages/ProfileSettings';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 
@@ -23,8 +27,34 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/vitrine/:tipo" element={<ShowcaseFull />} />
           <Route path="/produto/:id" element={<ProductDetail />} />
+          <Route path="/loja/:id/vitrine" element={<SellerStorePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Register />} />
+
+          <Route
+            path="/perfil"
+            element={
+              <ProtectedRoute>
+                <ProfileSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/meus-chats"
+            element={
+              <ProtectedRoute>
+                <MyChatsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/chat-venda/:protocol"
+            element={
+              <ProtectedRoute>
+                <SaleChatPage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/chat-duvidas/:id"
