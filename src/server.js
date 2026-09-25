@@ -22,6 +22,7 @@ const presaleChatRoutes = require('./routes/presale-chat.routes');
 const reportsRoutes = require('./routes/reports.routes');
 const supportChatRoutes = require('./routes/support-chat.routes');
 const platformRoutes = require('./routes/platform.routes');
+const { ensureSchemaCompatibility } = require('./services/schema-bootstrap');
 
 const app = express();
 
@@ -52,6 +53,13 @@ app.get('*', (req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Divide Aí rodando na porta ${PORT}`);
-});
+ensureSchemaCompatibility()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Divide Aí rodando na porta ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Falha ao preparar compatibilidade do banco:', err);
+    process.exit(1);
+  });

@@ -164,7 +164,10 @@ model Coupon {
 
 model Banner {
   id          String   @id @default(uuid())
+  eyebrow     String?
   title       String?
+  description String?
+  buttonText  String?
   desktopUrl  String
   mobileUrl   String?
   href        String?
@@ -498,5 +501,7 @@ model AdminSettings {
   activeTheme       SeasonalTheme  @default(DEFAULT)
   homepageOrder     Json           @default("[\"OWN\",\"THIRD_PARTY\"]")
   aiChatEnabled     Boolean        @default(true)
+  carouselIntervalMs Int           @default(5000)
+  platformRules     String?        @db.Text
   updatedAt         DateTime       @updatedAt
 }

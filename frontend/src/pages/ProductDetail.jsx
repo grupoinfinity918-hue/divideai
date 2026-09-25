@@ -12,9 +12,13 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showReport, setShowReport] = useState(false);
+  const [platformRules, setPlatformRules] = useState('');
 
   useEffect(() => {
-    fetch(`/api/listings/${id}`).then(r => r.json()).then(setItem).catch(() => {});
+    Promise.all([
+      fetch(`/api/listings/${id}`).then(r => r.json()),
+      fetch('/api/settings').then(r => r.json())
+    ]).then(([listing, settings]) => { setItem(listing); setPlatformRules(settings.platformRules || ''); }).catch(() => {});
   }, [id]);
 
   async function handleBuy() {
@@ -63,7 +67,7 @@ export default function ProductDetail() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{item.title}</h1>
-              <p className="text-sm text-gray-500">Vendido por {item.seller?.name} · {item.category?.name}</p>
+              <p className="text-sm text-gray-500">{item.origin === 'OWN' ? 'Produto oficial Divide Aí' : `Vendido por ${item.seller?.name}`} · {item.category?.name}</p>
             </div>
           </div>
 
@@ -72,7 +76,7 @@ export default function ProductDetail() {
               R$ {Number(item.price).toFixed(2)} <span className="text-sm text-gray-400 font-normal">/{item.billingPeriod}</span>
             </span>
             <span className="text-sm font-semibold text-gray-600 bg-pink-soft px-3 py-1 rounded-full">
-              {item.slotsAvailable} de {item.slotsTotal} vagas disponíveis
+              {item.slotsAvailable == null ? 'Disponível' : `${item.slotsAvailable} de ${item.slotsTotal} vagas disponíveis`}
             </span>
           </div>
 
@@ -81,16 +85,23 @@ export default function ProductDetail() {
 
           {item.rules && (
             <>
-              <h2 className="font-bold text-gray-900 mb-2">Regras do vendedor</h2>
+              <h2 className="font-bold text-gray-900 mb-2">{item.origin === 'OWN' ? 'Regras deste produto' : 'Regras do vendedor'}</h2>
               <p className="text-sm text-gray-600 whitespace-pre-line mb-6">{item.rules}</p>
             </>
+          )}
+
+          {platformRules && (
+            <div className="rounded-2xl bg-pink-soft border border-pink-100 p-5 mb-6">
+              <h2 className="font-bold text-gray-900 mb-2">Regras gerais da plataforma</h2>
+              <p className="text-sm text-gray-600 whitespace-pre-line">{platformRules}</p>
+            </div>
           )}
 
           {error && <p className="text-sm text-pink-dark mb-4">{error}</p>}
 
           <div className="flex flex-wrap gap-3">
-            <button onClick={handleBuy} className="btn-primary" disabled={loading || item.slotsAvailable <= 0}>
-              {loading ? 'Aguarde...' : item.slotsAvailable > 0 ? 'Adquirir Tela' : 'Sem vagas'}
+            <button onClick={handleBuy} className="btn-primary" disabled={loading || (item.slotsAvailable !== null && item.slotsAvailable <= 0)}>
+              {loading ? 'Aguarde...' : (item.slotsAvailable === null || item.slotsAvailable > 0) ? 'Adquirir' : 'Sem vagas'}
             </button>
             <button onClick={handleChat} className="btn-outline">Chat com o Vendedor</button>
             <button

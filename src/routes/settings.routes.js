@@ -15,14 +15,16 @@ router.get('/settings', async (req, res) => {
 });
 
 router.patch('/admin/settings', requireAuth, requireRole(['ADMIN']), async (req, res) => {
-  const { aiChatEnabled, activeTheme, homepageOrder } = req.body;
+  const { aiChatEnabled, activeTheme, homepageOrder, carouselIntervalMs, platformRules } = req.body;
 
   const updated = await prisma.adminSettings.upsert({
     where: { id: 'singleton' },
     update: {
       ...(aiChatEnabled !== undefined ? { aiChatEnabled } : {}),
       ...(activeTheme ? { activeTheme } : {}),
-      ...(homepageOrder ? { homepageOrder } : {})
+      ...(homepageOrder ? { homepageOrder } : {}),
+      ...(carouselIntervalMs !== undefined ? { carouselIntervalMs: Math.max(2000, Math.min(30000, Number(carouselIntervalMs) || 5000)) } : {}),
+      ...(platformRules !== undefined ? { platformRules: String(platformRules).slice(0, 10000) } : {})
     },
     create: { id: 'singleton' }
   });

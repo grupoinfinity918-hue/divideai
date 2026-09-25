@@ -109,15 +109,129 @@ router.post('/admin/coupons', requireAuth, requireRole(['ADMIN']), async (req,re
 
 router.get('/banners', async (req,res) => {
   const theme = req.query.theme || 'DEFAULT';
-  res.json(await prisma.banner.findMany({ where: { active: true, theme: { in: [theme, 'DEFAULT'] } }, orderBy: { sortOrder: 'asc' } }));
+  res.json(await prisma.banner.findMany({
+    where: { active: true, theme: { in: [theme, 'DEFAULT'] } },
+    orderBy: { sortOrder: 'asc' }
+  }));
 });
-router.get('/admin/banners', requireAuth, requireRole(['ADMIN']), async (req,res) => res.json(await prisma.banner.findMany({ orderBy: { sortOrder: 'asc' } })));
+
+router.get('/admin/banners', requireAuth, requireRole(['ADMIN']), async (req,res) => {
+  res.json(await prisma.banner.findMany({ orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] }));
+});
+
 router.post('/admin/banners', requireAuth, requireRole(['ADMIN']), async (req,res) => {
-  const { title, desktopUrl, mobileUrl, href, theme='DEFAULT', sortOrder=0 } = req.body;
+  const { eyebrow, title, description, buttonText, desktopUrl, mobileUrl, href, theme='DEFAULT', sortOrder=0, active=true } = req.body;
   if (!desktopUrl) return res.status(400).json({ error: 'Banner desktop é obrigatório' });
-  res.status(201).json(await prisma.banner.create({ data: { title, desktopUrl, mobileUrl, href, theme, sortOrder: Number(sortOrder) } }));
+  const banner = await prisma.banner.create({
+    data: {
+      eyebrow: eyebrow || null,
+      title: title || null,
+      description: description || null,
+      buttonText: buttonText || null,
+      desktopUrl,
+      mobileUrl: mobileUrl || null,
+      href: href || null,
+      theme,
+      sortOrder: Number(sortOrder) || 0,
+      active: Boolean(active)
+    }
+  });
+  res.status(201).json(banner);
 });
-router.delete('/admin/banners/:id', requireAuth, requireRole(['ADMIN']), async (req,res) => { await prisma.banner.delete({ where: { id: req.params.id } }); res.json({ok:true}); });
+
+router.patch('/admin/banners/:id', requireAuth, requireRole(['ADMIN']), async (req,res) => {
+  const { eyebrow, title, description, buttonText, desktopUrl, mobileUrl, href, theme, sortOrder, active } = req.body;
+  const existing = await prisma.banner.findUnique({ where: { id: req.params.id } });
+  if (!existing) return res.status(404).json({ error: 'Banner não encontrado' });
+  const banner = await prisma.banner.update({
+    where: { id: req.params.id },
+    data: {
+      ...(eyebrow !== undefined ? { eyebrow: eyebrow || null } : {}),
+      ...(title !== undefined ? { title: title || null } : {}),
+      ...(description !== undefined ? { description: description || null } : {}),
+      ...(buttonText !== undefined ? { buttonText: buttonText || null } : {}),
+      ...(desktopUrl !== undefined ? { desktopUrl } : {}),
+      ...(mobileUrl !== undefined ? { mobileUrl: mobileUrl || null } : {}),
+      ...(href !== undefined ? { href: href || null } : {}),
+      ...(theme !== undefined ? { theme } : {}),
+      ...(sortOrder !== undefined ? { sortOrder: Number(sortOrder) || 0 } : {}),
+      ...(active !== undefined ? { active: Boolean(active) } : {})
+    }
+  });
+  res.json(banner);
+});
+
+router.delete('/admin/banners/:id', requireAuth, requireRole(['ADMIN']), async (req,res) => {
+  await prisma.banner.delete({ where: { id: req.params.id } });
+  res.json({ok:true});
+});
+
+router.get('/admin/own-products', requireAuth, requireRole(['ADMIN']), async (req,res) => {
+  const listings = await prisma.listing.findMany({
+    where: { origin: 'OWN', sellerId: req.user.id },
+    include: { category: { select: { name: true, slug: true } } },
+    orderBy: { createdAt: 'desc' }
+  });
+  res.json(listings);
+});
+
+router.post('/admin/own-products', requireAuth, requireRole(['ADMIN']), async (req,res) => {
+  const { categoryId, title, description, rules, price, slotsTotal, billingPeriod='mensal', icon='tv', autoDelivery=false, autoDeliveryPayload, isPrioritario=false } = req.body;
+  if (!categoryId || !title?.trim() || !description?.trim() || !Number.isFinite(Number(price))) {
+    return res.status(400).json({ error: 'Categoria, título, descrição e preço são obrigatórios.' });
+  }
+  const total = slotsTotal === '' || slotsTotal == null ? null : Number(slotsTotal);
+  const listing = await prisma.listing.create({
+    data: {
+      sellerId: req.user.id,
+      categoryId,
+      origin: 'OWN',
+      title: title.trim(),
+      description: description.trim(),
+      rules: rules || null,
+      price: Number(price),
+      slotsTotal: total,
+      slotsAvailable: total,
+      billingPeriod: billingPeriod || 'mensal',
+      icon: icon || 'tv',
+      autoDelivery: Boolean(autoDelivery),
+      autoDeliveryPayload: autoDelivery ? (autoDeliveryPayload || null) : null,
+      isPrioritario: Boolean(isPrioritario),
+      status: 'ACTIVE'
+    },
+    include: { category: { select: { name: true, slug: true } } }
+  });
+  res.status(201).json(listing);
+});
+
+router.patch('/admin/own-products/:id', requireAuth, requireRole(['ADMIN']), async (req,res) => {
+  const existing = await prisma.listing.findFirst({ where: { id: req.params.id, origin: 'OWN', sellerId: req.user.id } });
+  if (!existing) return res.status(404).json({ error: 'Produto próprio não encontrado.' });
+  const { categoryId, title, description, rules, price, slotsTotal, billingPeriod, icon, autoDelivery, autoDeliveryPayload, isPrioritario, status } = req.body;
+  const total = slotsTotal === '' || slotsTotal == null ? null : Number(slotsTotal);
+  const data = {
+    ...(categoryId ? { categoryId } : {}),
+    ...(title !== undefined ? { title: String(title).trim() } : {}),
+    ...(description !== undefined ? { description: String(description).trim() } : {}),
+    ...(rules !== undefined ? { rules: rules || null } : {}),
+    ...(price !== undefined ? { price: Number(price) } : {}),
+    ...(slotsTotal !== undefined ? { slotsTotal: total, slotsAvailable: total } : {}),
+    ...(billingPeriod !== undefined ? { billingPeriod: billingPeriod || 'mensal' } : {}),
+    ...(icon !== undefined ? { icon: icon || 'tv' } : {}),
+    ...(autoDelivery !== undefined ? { autoDelivery: Boolean(autoDelivery), autoDeliveryPayload: autoDelivery ? (autoDeliveryPayload || null) : null } : {}),
+    ...(isPrioritario !== undefined ? { isPrioritario: Boolean(isPrioritario) } : {}),
+    ...(status && ['ACTIVE','PAUSED'].includes(status) ? { status } : {})
+  };
+  const updated = await prisma.listing.update({ where: { id: existing.id }, data, include: { category: { select: { name: true, slug: true } } } });
+  res.json(updated);
+});
+
+router.delete('/admin/own-products/:id', requireAuth, requireRole(['ADMIN']), async (req,res) => {
+  const existing = await prisma.listing.findFirst({ where: { id: req.params.id, origin: 'OWN', sellerId: req.user.id } });
+  if (!existing) return res.status(404).json({ error: 'Produto próprio não encontrado.' });
+  await prisma.listing.delete({ where: { id: existing.id } });
+  res.json({ ok: true });
+});
 
 router.get('/admin/dashboard', requireAuth, requireRole(['ADMIN','SUPPORT']), async (req,res) => {
   const start = req.query.start ? new Date(req.query.start) : new Date(new Date().setHours(0,0,0,0));

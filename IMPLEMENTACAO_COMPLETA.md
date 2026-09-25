@@ -46,3 +46,16 @@ O painel ADM também aceita URLs de banners desktop/mobile.
 
 ## Pix
 A confirmação automática depende do webhook real da EFI e das credenciais configuradas no ambiente.
+
+## Atualização — Administração da vitrine e banners
+- Aba **Meus Produtos** no ADM para criar, editar, destacar e excluir produtos próprios da plataforma.
+- Produtos próprios usam `origin=OWN` e aparecem em **Assine com o Divide Aí**; anúncios dos vendedores continuam em **Ofertas da comunidade**.
+- Aba **Configurações** com regras gerais da plataforma editáveis pelo ADM.
+- Seletor de intervalo do carrossel entre 3 e 30 segundos.
+- Banner agora possui etiqueta, título, descrição e texto de botão independentes por banner.
+- Banners podem ser criados, editados, ativados/desativados, ordenados e excluídos.
+- Logo do site: coloque o arquivo `logo.png` em `frontend/public/branding/`.
+- Para imagens de banner versionadas no GitHub, podem ser usados caminhos como `/themes/default/banners/banner.webp`.
+
+### Compatibilidade com PostgreSQL já existente no Railway
+A aplicação executa um bootstrap não destrutivo no início para adicionar somente as novas colunas necessárias (`IF NOT EXISTS`). Nenhuma tabela é recriada e nenhum dado existente é apagado.

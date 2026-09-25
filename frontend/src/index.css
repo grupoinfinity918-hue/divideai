@@ -12,3 +12,14 @@ body{background:#fff;color:#111827;font-family:Poppins,system-ui,sans-serif}
 .feature-card{border:1px solid var(--da-border);border-radius:18px;padding:18px;background:linear-gradient(135deg,#fff,var(--da-surface));display:flex;flex-direction:column;gap:6px}.feature-card b{font-size:14px}.feature-card span{font-size:12px;color:#6b7280}
 body[data-theme="CHRISTMAS"]{background:#fffdf8}.da-install{animation:slideIn .35s ease}@keyframes slideIn{from{transform:translateY(15px);opacity:0}to{transform:none;opacity:1}}
 body[data-theme="CHRISTMAS"]::before{content:"✦  ❄  ✦  ❄  ✦";position:fixed;top:72px;left:0;right:0;text-align:center;color:#b91c1c22;font-size:22px;letter-spacing:18px;pointer-events:none;z-index:1}
+
+.field {
+  width: 100%;
+  border: 1px solid #ffd6e4;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  background: #fff;
+  color: #1f2937;
+  outline: none;
+}
+.field:focus { border-color: var(--da-primary); box-shadow: 0 0 0 3px rgba(236,28,106,.08); }

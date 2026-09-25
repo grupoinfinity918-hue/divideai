@@ -31,16 +31,14 @@ export default function ProductCard({ item }) {
 
       <h3 className="font-bold text-gray-900">{item.title}</h3>
 
-      <Link
-        to={`/loja/${item.sellerId}`}
-        onClick={e => e.stopPropagation()}
-        className="text-xs text-pink-neon font-semibold hover:underline mt-1"
-      >
-        Visualizar Loja
-      </Link>
+      {item.origin === 'OWN' ? (
+        <span className="text-xs text-pink-neon font-semibold mt-1">Produto oficial Divide Aí</span>
+      ) : (
+        <Link to={`/loja/${item.sellerId}`} onClick={e => e.stopPropagation()} className="text-xs text-pink-neon font-semibold hover:underline mt-1">Visualizar Loja</Link>
+      )}
 
       <p className="text-sm text-gray-500 mt-2">
-        <span className="font-bold text-gray-800">{item.slotsAvailable ?? item.slotsTotal ?? '-'}</span> Vagas
+        {item.slotsAvailable == null ? <span className="font-bold text-gray-800">Disponível</span> : <><span className="font-bold text-gray-800">{item.slotsAvailable}</span> Vagas</>}
       </p>
 
       <p className="mt-1">
@@ -49,7 +47,7 @@ export default function ProductCard({ item }) {
       </p>
 
       <span className="mt-4 text-xs font-semibold text-gray-500 bg-gray-100 px-4 py-1.5 rounded-full">
-        {item.slotsAvailable > 0 ? `Assinado, com vagas` : 'Sem vagas no momento'}
+        {item.slotsAvailable == null || item.slotsAvailable > 0 ? 'Disponível para assinatura' : 'Sem vagas no momento'}
       </span>
     </div>
   );

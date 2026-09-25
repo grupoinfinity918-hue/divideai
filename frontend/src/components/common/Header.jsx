@@ -26,7 +26,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white border-b border-pink-100">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center">
-          <div className="flex items-center gap-2"><span className="w-9 h-9 rounded-xl bg-[var(--da-primary)] text-white flex items-center justify-center font-black">D</span><span className="font-black text-lg tracking-tight text-gray-900">Divide Aí</span></div>
+          <div className="flex items-center"><img src="/branding/logo.png" alt="Logo" className="h-10 max-w-[190px] object-contain" onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling.style.display = 'flex'; }} /><span style={{display:'none'}} className="items-center gap-2"><span className="w-9 h-9 rounded-xl bg-[var(--da-primary)] text-white flex items-center justify-center font-black">D</span><span className="font-black text-lg tracking-tight text-gray-900">Divide Aí</span></span></div>
         </Link>
 
         {!isAuthenticated ? (
