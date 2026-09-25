@@ -61,55 +61,111 @@ router.get('/chats/mine', requireAuth, async (req, res) => {
 
   res.json(withUnread);
 });
-
 router.get('/chats/:protocol', requireAuth, async (req, res) => {
-  const chat = await prisma.chat.findUnique({
-    where: { protocol: req.params.protocol },
+  const { protocol } = req.params;
+  const isStaff = ['ADMIN', 'SUPPORT'].includes(req.user.role);
+
+  // 1. Tenta buscar em Vendas (Chat comum)
+  let chat = await prisma.chat.findUnique({
+    where: { protocol },
     include: { messages: { orderBy: { createdAt: 'asc' } }, order: true }
   });
 
-  if (!chat) return res.status(404).json({ error: 'Chat não encontrado' });
+  if (chat) {
+    const isParty = [chat.clientId, chat.sellerId].includes(req.user.id);
+    if (!isParty && !isStaff) return res.status(403).json({ error: 'Acesso negado' });
 
-  const isParty = [chat.clientId, chat.sellerId].includes(req.user.id);
-  const isStaff = ['ADMIN', 'SUPPORT'].includes(req.user.role);
-  if (!isParty && !isStaff) return res.status(403).json({ error: 'Acesso negado' });
-
-  if (req.user.id === chat.clientId) {
-    await prisma.chat.update({ where: { id: chat.id }, data: { lastReadClient: new Date() } });
-  } else if (req.user.id === chat.sellerId) {
-    await prisma.chat.update({ where: { id: chat.id }, data: { lastReadSeller: new Date() } });
+    if (req.user.id === chat.clientId) {
+      await prisma.chat.update({ where: { id: chat.id }, data: { lastReadClient: new Date() } });
+    } else if (req.user.id === chat.sellerId) {
+      await prisma.chat.update({ where: { id: chat.id }, data: { lastReadSeller: new Date() } });
+    }
+    return res.json({ ...chat, kind: 'VENDA' });
   }
 
-  res.json(chat);
+  // 2. Tenta buscar em Pré-venda (Dúvidas)
+  let presaleChat = await prisma.preSaleChat.findUnique({
+    where: { protocol },
+    include: { messages: { orderBy: { createdAt: 'asc' } }, listing: true }
+  });
+
+  if (presaleChat) {
+    const isParty = [presaleChat.clientId, presaleChat.sellerId].includes(req.user.id);
+    if (!isParty && !isStaff) return res.status(403).json({ error: 'Acesso negado' });
+
+    if (req.user.id === presaleChat.clientId) {
+      await prisma.preSaleChat.update({ where: { id: presaleChat.id }, data: { lastReadClient: new Date() } });
+    } else if (req.user.id === presaleChat.sellerId) {
+      await prisma.preSaleChat.update({ where: { id: presaleChat.id }, data: { lastReadSeller: new Date() } });
+    }
+    return res.json({ ...presaleChat, kind: 'DUVIDA' });
+  }
+
+  // 3. Tenta buscar em Suporte Geral
+  let supportChat = await prisma.supportChat.findUnique({
+    where: { protocol },
+    include: { messages: { orderBy: { createdAt: 'asc' } } }
+  });
+
+  if (supportChat) {
+    const isParty = supportChat.userId === req.user.id;
+    if (!isParty && !isStaff) return res.status(403).json({ error: 'Acesso negado' });
+    
+    return res.json({ ...supportChat, kind: 'SUPORTE' });
+  }
+
+  return res.status(404).json({ error: 'Nenhum chat localizado com este protocolo.' });
 });
 
 router.post('/chats/:protocol/messages', requireAuth, async (req, res) => {
+  const { protocol } = req.params;
   const { content, attachmentUrl } = req.body;
+  const isStaff = ['ADMIN', 'SUPPORT'].includes(req.user.role);
 
-  const chat = await prisma.chat.findUnique({ where: { protocol: req.params.protocol } });
-  if (!chat) return res.status(404).json({ error: 'Chat não encontrado' });
+  const saleChat = await prisma.chat.findUnique({ where: { protocol } });
+  if (saleChat) {
+    let senderType;
+    if (req.user.id === saleChat.clientId) senderType = 'CLIENT';
+    else if (req.user.id === saleChat.sellerId) senderType = 'SELLER';
+    else if (isStaff) senderType = 'SUPPORT';
+    else return res.status(403).json({ error: 'Acesso negado' });
 
-  let senderType;
-  if (req.user.id === chat.clientId) senderType = 'CLIENT';
-  else if (req.user.id === chat.sellerId) senderType = 'SELLER';
-  else if (['ADMIN', 'SUPPORT'].includes(req.user.role)) senderType = 'SUPPORT';
-  else return res.status(403).json({ error: 'Acesso negado' });
+    const message = await prisma.chatMessage.create({
+      data: { chatId: saleChat.id, senderId: req.user.id, senderType, content, attachmentUrl }
+    });
+    await prisma.chat.update({ where: { id: saleChat.id }, data: { updatedAt: new Date() } });
+    return res.status(201).json(message);
+  }
 
-  const message = await prisma.chatMessage.create({
-    data: {
-      chatId: chat.id,
-      senderId: req.user.id,
-      senderType,
-      content,
-      attachmentUrl
-    }
-  });
+  const presaleChat = await prisma.preSaleChat.findUnique({ where: { protocol } });
+  if (presaleChat) {
+    let senderType;
+    if (req.user.id === presaleChat.clientId) senderType = 'CLIENT';
+    else if (req.user.id === presaleChat.sellerId) senderType = 'SELLER';
+    else if (isStaff) senderType = 'SUPPORT';
+    else return res.status(403).json({ error: 'Acesso negado' });
 
-  await prisma.chat.update({ where: { id: chat.id }, data: { updatedAt: new Date() } });
+    const message = await prisma.preSaleMessage.create({
+      data: { chatId: presaleChat.id, senderId: req.user.id, senderType, content }
+    });
+    await prisma.preSaleChat.update({ where: { id: presaleChat.id }, data: { updatedAt: new Date() } });
+    return res.status(201).json(message);
+  }
 
-  res.status(201).json(message);
+  const supportChat = await prisma.supportChat.findUnique({ where: { protocol } });
+  if (supportChat) {
+    let senderType = req.user.id === supportChat.userId ? 'CLIENT' : 'SUPPORT';
+    if (senderType === 'SUPPORT' && !isStaff) return res.status(403).json({ error: 'Acesso negado' });
+
+    const message = await prisma.supportMessage.create({
+      data: { chatId: supportChat.id, senderId: req.user.id, senderType, content }
+    });
+    await prisma.supportChat.update({ where: { id: supportChat.id }, data: { updatedAt: new Date() } });
+    return res.status(201).json(message);
+  }
+
+  return res.status(404).json({ error: 'Chat não encontrado' });
 });
-
 router.patch('/chats/:protocol/status', requireAuth, async (req, res) => {
   const { status } = req.body;
   const validStatuses = ['AWAITING_SHIPMENT', 'IN_WARRANTY', 'COMPLETED', 'DISPUTED'];
@@ -188,9 +244,9 @@ router.get('/admin/chats-all', requireAuth, requireRole(['ADMIN', 'SUPPORT']), a
   ]);
 
   res.json({
-    sales: sales.map(c => ({ id: c.id, protocol: c.protocol, kind: 'VENDA', client: c.client.name, seller: c.seller.name, status: c.status })),
-    presale: presale.map(c => ({ id: c.id, protocol: c.protocol, kind: 'DUVIDA', client: c.client.name, seller: c.seller.name, title: c.listing.title })),
-    support: support.map(c => ({ id: c.id, protocol: c.protocol, kind: 'SUPORTE', user: c.user.name, status: c.status }))
+    sales: sales.map(c => ({ id: c.id, protocol: c.protocol, kind: 'VENDA', client: c.client?.name || 'N/A', seller: c.seller?.name || 'N/A', status: c.status })),
+    presale: presale.map(c => ({ id: c.id, protocol: c.protocol, kind: 'DUVIDA', client: c.client?.name || 'N/A', seller: c.seller?.name || 'N/A', title: c.listing?.title || 'Anúncio Removido' })),
+    support: support.map(c => ({ id: c.id, protocol: c.protocol, kind: 'SUPORTE', user: c.user?.name || 'N/A', status: c.status }))
   });
 });
 
@@ -226,7 +282,6 @@ router.get('/chats/unread-count', requireAuth, async (req, res) => {
       where: { chatId: chat.id, senderType: { not: 'CLIENT' }, ...(chat.lastReadUser ? { createdAt: { gt: chat.lastReadUser } } : {}) }
     });
   }
-
   res.json({ unreadCount: total });
 });
 
