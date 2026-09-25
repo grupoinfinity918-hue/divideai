@@ -65,7 +65,13 @@ router.post('/admin/support-chats/with/:userId', requireAuth, requireRole(['ADMI
 router.get('/support-chats/:id', requireAuth, async (req, res) => {
   const chat = await prisma.supportChat.findUnique({
     where: { id: req.params.id },
-    include: { messages: { orderBy: { createdAt: 'asc' } } }
+    include: {
+      messages: {
+        orderBy: { createdAt: 'asc' },
+        include: { sender: { select: { id: true, name: true, avatarUrl: true } } }
+      },
+      user: { select: { id: true, name: true, avatarUrl: true } }
+    }
   });
 
   if (!chat) return res.status(404).json({ error: 'Chat não encontrado' });

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 export const ICON_MAP = {
   tv: '📺',
@@ -30,6 +30,14 @@ export default function ProductCard({ item }) {
       </div>
 
       <h3 className="font-bold text-gray-900">{item.title}</h3>
+
+      <Link
+        to={`/loja/${item.sellerId}`}
+        onClick={e => e.stopPropagation()}
+        className="text-xs text-pink-neon font-semibold hover:underline mt-1"
+      >
+        Visualizar Loja
+      </Link>
 
       <p className="text-sm text-gray-500 mt-2">
         <span className="font-bold text-gray-800">{item.slotsAvailable ?? item.slotsTotal ?? '-'}</span> Vagas

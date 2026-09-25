@@ -64,17 +64,26 @@ router.get('/presale-chats/mine', requireAuth, async (req, res) => {
 router.get('/presale-chats/:id', requireAuth, async (req, res) => {
   const chat = await prisma.preSaleChat.findUnique({
     where: { id: req.params.id },
-    include: { messages: { orderBy: { createdAt: 'asc' } }, listing: { select: { title: true } } }
+    include: {
+      messages: {
+        orderBy: { createdAt: 'asc' },
+        include: { sender: { select: { id: true, name: true, avatarUrl: true } } }
+      },
+      listing: { select: { title: true } },
+      client: { select: { id: true, name: true, avatarUrl: true } },
+      seller: { select: { id: true, name: true, avatarUrl: true } }
+    }
   });
 
   if (!chat) return res.status(404).json({ error: 'Chat não encontrado' });
-  if (![chat.clientId, chat.sellerId].includes(req.user.id)) {
+  const isStaff = ['ADMIN', 'SUPPORT'].includes(req.user.role);
+  if (![chat.clientId, chat.sellerId].includes(req.user.id) && !isStaff) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
 
   if (req.user.id === chat.clientId) {
     await prisma.preSaleChat.update({ where: { id: chat.id }, data: { lastReadClient: new Date() } });
-  } else {
+  } else if (req.user.id === chat.sellerId) {
     await prisma.preSaleChat.update({ where: { id: chat.id }, data: { lastReadSeller: new Date() } });
   }
 
@@ -87,8 +96,10 @@ router.post('/presale-chats/:id/messages', requireAuth, async (req, res) => {
   const chat = await prisma.preSaleChat.findUnique({ where: { id: req.params.id } });
   if (!chat) return res.status(404).json({ error: 'Chat não encontrado' });
 
+  const isStaff = ['ADMIN', 'SUPPORT'].includes(req.user.role);
   let senderType;
-  if (req.user.id === chat.clientId) senderType = 'CLIENT';
+  if (isStaff) senderType = 'SUPPORT';
+  else if (req.user.id === chat.clientId) senderType = 'CLIENT';
   else if (req.user.id === chat.sellerId) senderType = 'SELLER';
   else return res.status(403).json({ error: 'Acesso negado' });
 

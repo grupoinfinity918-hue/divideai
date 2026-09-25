@@ -164,12 +164,6 @@ router.patch('/seller/store', requireAuth, async (req, res) => {
   res.json(updated);
 });
 
-router.patch('/profile/avatar', requireAuth, async (req, res) => {
-  const { avatarUrl } = req.body;
-  const updated = await prisma.user.update({ where: { id: req.user.id }, data: { avatarUrl } });
-  res.json({ avatarUrl: updated.avatarUrl });
-});
-
 router.post('/seller/kyc', requireAuth, async (req, res) => {
   const { fullName, cpf, birthDate, address } = req.body;
   if (!fullName || !cpf || !birthDate || !address) {

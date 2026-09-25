@@ -4,7 +4,7 @@ import ImageUploadField from '../components/common/ImageUploadField';
 import { authHeader, useAuth } from '../context/AuthContext';
 
 export default function ProfileSettings() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '');
   const [status, setStatus] = useState('');
 
@@ -15,6 +15,7 @@ export default function ProfileSettings() {
       headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify({ avatarUrl })
     });
+    await refreshUser();
     setStatus('done');
   }
 

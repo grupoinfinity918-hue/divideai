@@ -80,8 +80,15 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
+  async function refreshUser() {
+    const token = localStorage.getItem('da_token');
+    if (!token) return;
+    const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) setUser(await res.json());
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, unreadCount, refreshUnread: loadUnread, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, unreadCount, refreshUnread: loadUnread, refreshUser, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

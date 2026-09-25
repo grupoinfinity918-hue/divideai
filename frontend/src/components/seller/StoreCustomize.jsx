@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { authHeader } from '../../context/AuthContext';
+import { authHeader, useAuth } from '../../context/AuthContext';
 import ImageUploadField from '../common/ImageUploadField';
 
 const COLORS = ['#ec1c6a', '#8b5cf6', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444'];
 
 export default function StoreSettings() {
+  const { refreshUser } = useAuth();
   const [form, setForm] = useState({ storeName: '', storeColor: '#ec1c6a', storeBannerUrl: '', avatarUrl: '' });
   const [status, setStatus] = useState('');
 
@@ -28,6 +29,7 @@ export default function StoreSettings() {
       headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(form)
     });
+    await refreshUser();
     setStatus('done');
   }
 

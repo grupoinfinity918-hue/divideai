@@ -96,6 +96,7 @@ model User {
   phone         String
   passwordHash  String
   role          UserRole   @default(CLIENT)
+  customCommissionRate Float @default(5.0)
   cpf           String?    @unique
   birthDate     DateTime?
   address       String?
@@ -124,6 +125,8 @@ model User {
   preSaleChatsAsSeller PreSaleChat[] @relation("PreSaleSellerChats")
   reports         Report[]
   supportChats    SupportChat[]
+  preSaleMessages PreSaleMessage[] @relation("PreSaleMessageSender")
+  supportMessages SupportMessage[] @relation("SupportMessageSender")
 }
 
 model Wallet {
@@ -351,6 +354,7 @@ model PreSaleMessage {
   chatId     String
   chat       PreSaleChat  @relation(fields: [chatId], references: [id])
   senderId   String
+  sender     User         @relation("PreSaleMessageSender", fields: [senderId], references: [id])
   senderType SenderType
   content    String
   createdAt  DateTime     @default(now())
@@ -375,6 +379,7 @@ model SupportMessage {
   chatId     String
   chat       SupportChat  @relation(fields: [chatId], references: [id])
   senderId   String
+  sender     User         @relation("SupportMessageSender", fields: [senderId], references: [id])
   senderType SenderType
   content    String
   createdAt  DateTime     @default(now())

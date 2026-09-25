@@ -27,7 +27,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/vitrine/:tipo" element={<ShowcaseFull />} />
           <Route path="/produto/:id" element={<ProductDetail />} />
-          <Route path="/loja/:id/vitrine" element={<SellerStorePage />} />
+          <Route path="/loja/:id" element={<SellerStorePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Register />} />
 

@@ -102,14 +102,24 @@ export default function ChatMonitoring() {
               </div>
               <div className="flex-1 overflow-y-auto flex flex-col gap-2">
                 {activeChat.messages?.map(m => (
-                  <div
-                    key={m.id}
-                    className={`max-w-[80%] rounded-xl px-3 py-2 text-sm border border-pink-100 ${
-                      m.senderType === 'SUPPORT' ? 'self-center bg-pink-soft' : m.senderType === 'CLIENT' ? 'self-start bg-white' : 'self-end bg-white'
-                    }`}
-                  >
-                    <span className="block text-[11px] text-gray-400 font-semibold">{m.senderType}</span>
-                    {m.content}
+                  <div key={m.id} className="flex items-end gap-2">
+                    {m.senderType !== 'SUPPORT' && (
+                      m.sender?.avatarUrl ? (
+                        <img src={m.sender.avatarUrl} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <span className="w-6 h-6 rounded-full bg-pink-soft flex items-center justify-center text-pink-neon text-[10px] font-bold flex-shrink-0">
+                          {m.sender?.name?.[0]?.toUpperCase() || '?'}
+                        </span>
+                      )
+                    )}
+                    <div
+                      className={`max-w-[80%] rounded-xl px-3 py-2 text-sm border border-pink-100 ${
+                        m.senderType === 'SUPPORT' ? 'mx-auto bg-pink-soft' : m.senderType === 'CLIENT' ? 'bg-white' : 'bg-white'
+                      }`}
+                    >
+                      <span className="block text-[11px] text-gray-400 font-semibold">{m.sender?.name || m.senderType}</span>
+                      {m.content}
+                    </div>
                   </div>
                 ))}
               </div>

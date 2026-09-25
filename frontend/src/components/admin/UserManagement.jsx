@@ -2,19 +2,43 @@ import { useEffect, useState } from 'react';
 import { authHeader } from '../../context/AuthContext';
 
 function EditUserModal({ user, onClose, onSaved }) {
-  const [form, setForm] = useState({ name: user.name, email: user.email, phone: user.phone, password: '' });
+  const [form, setForm] = useState({
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    password: '',
+    customCommissionRate: user.role === 'SELLER' ? Number(user.customCommissionRate ?? 5) : 5
+  });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   async function handleSave(e) {
     e.preventDefault();
     setSaving(true);
-    const payload = { ...form };
-    if (!payload.password) delete payload.password;
-    await fetch(`/api/admin/users/${user.id}`, {
+    setError('');
+
+    const payload = {
+      name: form.name,
+      email: form.email,
+      phone: form.phone
+    };
+
+    if (form.password) payload.password = form.password;
+    if (user.role === 'SELLER') payload.customCommissionRate = Number(form.customCommissionRate);
+
+    const res = await fetch(`/api/admin/users/${user.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(payload)
     });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || 'Não foi possível salvar as alterações.');
+      setSaving(false);
+      return;
+    }
+
     setSaving(false);
     onSaved();
   }
@@ -41,6 +65,23 @@ function EditUserModal({ user, onClose, onSaved }) {
           placeholder="Telefone"
           className="border border-pink-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-neon"
         />
+
+        {user.role === 'SELLER' && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Comissão do vendedor (%)</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={form.customCommissionRate}
+              onChange={e => setForm({ ...form, customCommissionRate: e.target.value })}
+              className="w-full border border-pink-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-neon"
+            />
+            <p className="text-xs text-gray-400 mt-1">Essa taxa será aplicada automaticamente nas vendas deste vendedor.</p>
+          </div>
+        )}
+
         <input
           type="password"
           value={form.password}
@@ -48,6 +89,9 @@ function EditUserModal({ user, onClose, onSaved }) {
           placeholder="Nova senha (opcional)"
           className="border border-pink-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-neon"
         />
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
         <div className="flex gap-2 mt-2">
           <button type="button" onClick={onClose} className="btn-outline text-sm flex-1">Cancelar</button>
           <button className="btn-primary text-sm flex-1" disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</button>
@@ -84,12 +128,13 @@ export default function UserManagement() {
     <div>
       <h2 className="text-lg font-bold text-gray-900 mb-4">Gestão de Usuários</h2>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse min-w-[600px]">
+        <table className="w-full text-sm border-collapse min-w-[760px]">
           <thead>
             <tr className="text-left border-b border-pink-100 text-gray-500">
               <th className="p-2">Nome</th>
               <th className="p-2">E-mail</th>
               <th className="p-2">Cargo</th>
+              <th className="p-2">Comissão</th>
               <th className="p-2">Status</th>
               <th className="p-2">Ações</th>
             </tr>
@@ -100,13 +145,14 @@ export default function UserManagement() {
                 <td className="p-2 font-medium">{u.name}</td>
                 <td className="p-2">{u.email}</td>
                 <td className="p-2">{u.role}</td>
+                <td className="p-2">{u.role === 'SELLER' ? `${Number(u.customCommissionRate ?? 5).toFixed(2)}%` : '—'}</td>
                 <td className="p-2">
                   <span className={`text-xs font-bold px-2 py-1 rounded-full ${u.banned ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
                     {u.banned ? 'Banido' : 'Ativo'}
                   </span>
                 </td>
                 <td className="p-2 flex gap-2 flex-wrap">
-                  <button onClick={() => setEditing(u)} className="btn-outline text-xs px-3 py-1">Alterar Dados/Senha</button>
+                  <button onClick={() => setEditing(u)} className="btn-outline text-xs px-3 py-1">{u.role === 'SELLER' ? 'Dados / Comissão' : 'Alterar Dados/Senha'}</button>
                   <button onClick={() => toggleBan(u.id)} className="btn-outline text-xs px-3 py-1">
                     {u.banned ? 'Ativar' : 'Banir'}
                   </button>

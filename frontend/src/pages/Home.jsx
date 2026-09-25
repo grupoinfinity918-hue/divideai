@@ -78,10 +78,6 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4">
         <section className="pt-6">
-          <div className="rounded-2xl bg-gradient-to-br from-pink-neon to-pink-light h-40 md:h-56" />
-        </section>
-
-        <section className="pt-8">
           <div className="flex gap-3 overflow-x-auto pb-2">
             <button
               onClick={() => setActiveCategory(null)}
