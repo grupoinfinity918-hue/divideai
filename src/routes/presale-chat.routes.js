@@ -69,9 +69,9 @@ router.get('/presale-chats/:id', requireAuth, async (req, res) => {
         orderBy: { createdAt: 'asc' },
         include: { sender: { select: { id: true, name: true, avatarUrl: true } } }
       },
-      listing: { select: { title: true } },
+      listing: { select: { id: true, title: true, price: true, billingPeriod: true } },
       client: { select: { id: true, name: true, avatarUrl: true } },
-      seller: { select: { id: true, name: true, avatarUrl: true } }
+      seller: { select: { id: true, name: true, avatarUrl: true, storeName: true, storeColor: true, storeBannerUrl: true } }
     }
   });
 

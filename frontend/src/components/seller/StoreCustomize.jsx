@@ -24,11 +24,12 @@ export default function StoreSettings() {
   async function handleSave(e) {
     e.preventDefault();
     setStatus('saving');
-    await fetch('/api/seller/store', {
+    const response = await fetch('/api/seller/store', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(form)
     });
+    if (!response.ok) { setStatus('error'); return; }
     await refreshUser();
     setStatus('done');
   }
@@ -77,7 +78,8 @@ export default function StoreSettings() {
       <button className="btn-primary" disabled={status === 'saving'}>
         {status === 'saving' ? 'Salvando...' : 'Salvar Loja'}
       </button>
-      {status === 'done' && <p className="text-sm text-green-600">Loja atualizada!</p>}
+      {status === 'done' && <p className="text-sm text-green-600">✓ Loja atualizada e salva.</p>}
+      {status === 'error' && <p className="text-sm text-red-600">Não foi possível salvar as alterações.</p>}
     </form>
   );
 }

@@ -46,7 +46,7 @@ router.get('/listings', async (req, res) => {
 router.get('/listings/:id', async (req, res) => {
   const listing = await prisma.listing.findUnique({
     where: { id: req.params.id },
-    include: { seller: { select: { id: true, name: true } }, category: { select: { name: true } } }
+    include: { seller: { select: { id: true, name: true, storeName: true, storeColor: true, storeBannerUrl: true, avatarUrl: true } }, category: { select: { name: true } } }
   });
   if (!listing) return res.status(404).json({ error: 'Anúncio não encontrado' });
   res.json(listing);
@@ -150,7 +150,7 @@ router.get('/sellers/:id/store', async (req, res) => {
   res.json({ seller, listings, reviews, ratingAverage: avg, ratingCount: reviews.length });
 });
 
-router.patch('/seller/store', requireAuth, async (req, res) => {
+router.patch('/seller/store', requireAuth, requireRole(['SELLER','ADMIN']), async (req, res) => {
   const { storeName, storeColor, storeBannerUrl, avatarUrl } = req.body;
   const updated = await prisma.user.update({
     where: { id: req.user.id },

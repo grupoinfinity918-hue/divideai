@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import Header from '../components/common/Header';
 import { authHeader, useAuth } from '../context/AuthContext';
 
@@ -62,6 +62,7 @@ export default function PreSaleChatPage() {
             <div>
               <h1 className="font-bold text-gray-900 text-sm">{chat.listing?.title}</h1>
               <p className="text-xs text-gray-400">Protocolo: {chat.protocol}</p>
+              <div className="flex gap-2 mt-2">{chat.seller?.id && <Link to={`/loja/${chat.seller.id}`} className="text-[11px] font-black text-pink-neon">🏪 Ver loja</Link>}{chat.listing?.id && <Link to={`/produto/${chat.listing.id}`} className="text-[11px] font-black text-gray-500">Ver produto</Link>}</div>
             </div>
           </div>
 

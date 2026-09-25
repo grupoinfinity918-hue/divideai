@@ -34,7 +34,7 @@ export default function ProductCard({ item }) {
       {item.origin === 'OWN' ? (
         <span className="text-xs text-pink-neon font-semibold mt-1">Produto oficial Divide Aí</span>
       ) : (
-        <Link to={`/loja/${item.sellerId}`} onClick={e => e.stopPropagation()} className="text-xs text-pink-neon font-semibold hover:underline mt-1">Visualizar Loja</Link>
+        <Link to={`/loja/${item.sellerId}`} onClick={e => e.stopPropagation()} className="mt-2 inline-flex items-center justify-center rounded-xl border border-pink-200 bg-white px-4 py-2 text-xs font-black text-pink-neon shadow-sm hover:bg-pink-soft transition">🏪 Visualizar Loja</Link>
       )}
 
       <p className="text-sm text-gray-500 mt-2">

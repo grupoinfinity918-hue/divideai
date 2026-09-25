@@ -245,8 +245,23 @@ router.get('/admin/dashboard', requireAuth, requireRole(['ADMIN','SUPPORT']), as
 });
 
 router.get('/ranking/sellers', async (req,res) => {
-  const sellers = await prisma.user.findMany({ where: { role: 'SELLER', banned: false }, select: { id:true, name:true, storeName:true, avatarUrl:true, createdAt:true, _count:{select:{listings:true, ordersAsSeller:true}}, reviewsReceived:{select:{stars:true}} } });
-  const ranking = sellers.map(s => { const ratings=s.reviewsReceived; const avg=ratings.length?ratings.reduce((a,r)=>a+r.stars,0)/ratings.length:0; return {...s, ratingAverage:avg, ratingCount:ratings.length, score: s._count.ordersAsSeller*10 + ratings.length*3 + avg*5}; }).sort((a,b)=>b.score-a.score);
+  const sellers = await prisma.user.findMany({
+    where: { role: 'SELLER', banned: false },
+    select: { id:true, name:true, storeName:true, avatarUrl:true, createdAt:true, reviewsReceived:{select:{stars:true}} }
+  });
+  const sales = await prisma.order.groupBy({
+    by: ['sellerId'],
+    where: { status: { in: ['PAID','AWAITING_DELIVERY','DELIVERED','IN_WARRANTY','COMPLETED'] } },
+    _sum: { amount: true },
+    _count: { _all: true }
+  });
+  const salesMap = Object.fromEntries(sales.map(s => [s.sellerId, { total: Number(s._sum.amount || 0), orders: s._count._all }]));
+  const ranking = sellers.map(s => {
+    const r = salesMap[s.id] || { total: 0, orders: 0 };
+    const ratings = s.reviewsReceived;
+    const avg = ratings.length ? ratings.reduce((a,x)=>a+x.stars,0)/ratings.length : 0;
+    return { ...s, totalSales: r.total, salesCount: r.orders, ratingAverage: avg, ratingCount: ratings.length };
+  }).sort((a,b) => b.totalSales - a.totalSales || b.salesCount - a.salesCount);
   res.json(ranking.slice(0,50));
 });
 

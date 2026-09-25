@@ -67,7 +67,8 @@ export default function ProductDetail() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{item.title}</h1>
-              <p className="text-sm text-gray-500">{item.origin === 'OWN' ? 'Produto oficial Divide Aí' : `Vendido por ${item.seller?.name}`} · {item.category?.name}</p>
+              <p className="text-sm text-gray-500">{item.origin === 'OWN' ? 'Produto oficial Divide Aí' : `Vendido por ${item.seller?.storeName || item.seller?.name}`} · {item.category?.name}</p>
+              {item.origin !== 'OWN' && item.seller?.id && <Link to={`/loja/${item.seller.id}`} className="inline-flex mt-2 items-center rounded-xl border border-pink-200 bg-pink-soft px-3 py-2 text-xs font-black text-pink-neon">🏪 Visualizar Loja do Vendedor</Link>}
             </div>
           </div>
 
@@ -103,7 +104,7 @@ export default function ProductDetail() {
             <button onClick={handleBuy} className="btn-primary" disabled={loading || (item.slotsAvailable !== null && item.slotsAvailable <= 0)}>
               {loading ? 'Aguarde...' : (item.slotsAvailable === null || item.slotsAvailable > 0) ? 'Adquirir' : 'Sem vagas'}
             </button>
-            <button onClick={handleChat} className="btn-outline">Chat com o Vendedor</button>
+            <button onClick={handleChat} className="btn-outline">💬 Falar na pré-venda</button>
             <button
               onClick={() => setShowReport(true)}
               className="text-sm text-gray-400 hover:text-pink-dark px-4 py-2"
