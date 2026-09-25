@@ -101,15 +101,12 @@ router.post('/pix/webhook', async (req, res) => {
       order.amount
     );
 
-    await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        status: 'PAID',
-        paidAt: new Date(),
-        commissionAmt,
-        netToSeller
-      }
-    });
+    await prisma.$transaction([
+      prisma.order.update({ where: { id: order.id }, data: { status: 'PAID', paidAt: new Date(), commissionAmt, netToSeller } }),
+      prisma.orderEvent.create({ data: { orderId: order.id, toStatus: 'PAID', note: 'Pagamento Pix confirmado automaticamente.' } }),
+      prisma.notification.create({ data: { userId: order.clientId, type: 'PAYMENT_CONFIRMED', title: 'Pagamento confirmado', message: `O pagamento do pedido ${order.protocol} foi confirmado.`, link: `/pedido/${order.protocol}` } }),
+      prisma.notification.create({ data: { userId: order.sellerId, type: 'NEW_ORDER', title: 'Nova venda confirmada', message: `O pedido ${order.protocol} foi pago e está aguardando atendimento.`, link: '/loja' } })
+    ]);
 
     await creditSaleHeld(order.sellerId, order.id, netToSeller);
     await notifySellerPixConfirmed(order, order.seller.phone);

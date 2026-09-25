@@ -30,12 +30,8 @@ router.post('/orders', requireAuth, async (req, res) => {
 
   const order = await prisma.order.create({
     data: {
-      protocol: generateProtocol(),
-      listingId: listing.id,
-      clientId: req.user.id,
-      sellerId: listing.sellerId,
-      amount: listing.price,
-      status: 'AWAITING_PAYMENT'
+      protocol: generateProtocol(), listingId: listing.id, clientId: req.user.id, sellerId: listing.sellerId, amount: listing.price, status: 'AWAITING_PAYMENT',
+      events: { create: { actorId: req.user.id, toStatus: 'AWAITING_PAYMENT', note: 'Pedido criado e aguardando pagamento.' } }
     }
   });
 
@@ -48,6 +44,12 @@ router.post('/orders', requireAuth, async (req, res) => {
   }
 
   res.status(201).json(order);
+});
+
+
+router.get('/seller/orders', requireAuth, async (req, res) => {
+  const orders = await prisma.order.findMany({ where: { sellerId: req.user.id }, include: { listing: { select: { title: true } }, client: { select: { name: true } } }, orderBy: { createdAt: 'desc' } });
+  res.json(orders);
 });
 
 router.get('/orders/mine', requireAuth, async (req, res) => {

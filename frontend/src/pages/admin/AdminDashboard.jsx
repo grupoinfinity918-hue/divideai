@@ -8,9 +8,14 @@ import ListingManagement from '../../components/admin/ListingManagement';
 import ReportsInbox from '../../components/admin/ReportsInbox';
 import ChatMonitoring from './ChatMonitoring';
 import ListingApproval from './ListingApproval';
+import AdminOverview from '../../components/admin/AdminOverview';
+import CommentModeration from '../../components/admin/CommentModeration';
+import BannerManager from '../../components/admin/BannerManager';
+import CouponManager from '../../components/admin/CouponManager';
 import { authHeader } from '../../context/AuthContext';
 
 const TABS = [
+  { key: 'overview', label: 'Visão Geral' },
   { key: 'withdrawals', label: 'Alertas de Saque' },
   { key: 'chats', label: 'Monitoria de Chats' },
   { key: 'approval', label: 'Aprovação de Anúncios' },
@@ -18,11 +23,14 @@ const TABS = [
   { key: 'users', label: 'Gestão de Usuários' },
   { key: 'listings', label: 'Gestão de Anúncios' },
   { key: 'reports', label: 'Denúncias' },
+  { key: 'comments', label: 'Comentários' },
+  { key: 'banners', label: 'Banners' },
+  { key: 'coupons', label: 'Cupons' },
   { key: 'settings', label: 'Configurações' }
 ];
 
 export default function AdminDashboard() {
-  const [tab, setTab] = useState('withdrawals');
+  const [tab, setTab] = useState('overview');
   const [settings, setSettings] = useState({ aiChatEnabled: true, activeTheme: 'DEFAULT' });
 
   useEffect(() => {
@@ -66,6 +74,7 @@ export default function AdminDashboard() {
           ))}
         </div>
 
+        {tab === 'overview' && <AdminOverview />}
         {tab === 'withdrawals' && <WithdrawalAlerts />}
         {tab === 'chats' && <ChatMonitoring />}
         {tab === 'approval' && <ListingApproval />}
@@ -73,6 +82,9 @@ export default function AdminDashboard() {
         {tab === 'users' && <UserManagement />}
         {tab === 'listings' && <ListingManagement />}
         {tab === 'reports' && <ReportsInbox />}
+        {tab === 'comments' && <CommentModeration />}
+        {tab === 'banners' && <BannerManager />}
+        {tab === 'coupons' && <CouponManager />}
         {tab === 'settings' && (
           <div className="flex flex-col gap-6 max-w-md">
             <div className="card p-5 flex items-center justify-between">

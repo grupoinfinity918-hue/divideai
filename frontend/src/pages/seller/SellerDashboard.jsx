@@ -7,9 +7,11 @@ import PreSaleInbox from '../../components/seller/PreSaleInbox';
 import MyProducts from '../../components/seller/MyProducts';
 import StoreCustomize from '../../components/seller/StoreCustomize';
 import KycGate from '../../components/seller/KycGate';
+import OrderManagement from '../../components/seller/OrderManagement';
 import { useAuth } from '../../context/AuthContext';
 
 const TABS = [
+  { key: 'orders', label: 'Pedidos' },
   { key: 'chats', label: 'Atendimentos' },
   { key: 'presale', label: 'Dúvidas de Produtos' },
   { key: 'products', label: 'Meus Produtos' },
@@ -51,6 +53,7 @@ export default function SellerDashboard() {
               ))}
             </div>
 
+            {tab === 'orders' && <OrderManagement />}
             {tab === 'chats' && <KanbanBoard />}
             {tab === 'presale' && <PreSaleInbox />}
             {tab === 'products' && <MyProducts />}

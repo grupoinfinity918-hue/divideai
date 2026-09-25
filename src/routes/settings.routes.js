@@ -30,6 +30,24 @@ router.patch('/admin/settings', requireAuth, requireRole(['ADMIN']), async (req,
   res.json(updated);
 });
 
+
+router.get('/admin/themes', requireAuth, requireRole(['ADMIN','SUPPORT']), async (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const root = path.join(__dirname, '../../frontend/public/themes');
+  const themes = [];
+  try {
+    for (const dir of fs.readdirSync(root, { withFileTypes: true })) {
+      if (!dir.isDirectory()) continue;
+      const file = path.join(root, dir.name, 'theme.json');
+      if (!fs.existsSync(file)) continue;
+      try { themes.push(JSON.parse(fs.readFileSync(file, 'utf8'))); } catch (_) {}
+    }
+  } catch (_) {}
+  if (!themes.some(t => t.key === 'DEFAULT')) themes.unshift({ key: 'DEFAULT', label: 'Padrão', colors: { '--da-primary': '#ec1c6a', '--da-primary-dark': '#c4104f', '--da-primary-light': '#ff8fb8', '--da-surface': '#fff5f8', '--da-border': '#ffd6e4' } });
+  res.json(themes);
+});
+
 router.get('/admin/listing-edits', requireAuth, requireRole(['ADMIN', 'SUPPORT']), async (req, res) => {
   const { status } = req.query;
   const edits = await prisma.listingEdit.findMany({

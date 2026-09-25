@@ -26,7 +26,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white border-b border-pink-100">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center">
-          <img src="/assets/logo.png" alt="Divide Aí" className="h-10 w-auto" />
+          <div className="flex items-center gap-2"><span className="w-9 h-9 rounded-xl bg-[var(--da-primary)] text-white flex items-center justify-center font-black">D</span><span className="font-black text-lg tracking-tight text-gray-900">Divide Aí</span></div>
         </Link>
 
         {!isAuthenticated ? (
@@ -59,6 +59,7 @@ export default function Header() {
 
             {open && (
               <div className="absolute right-0 mt-2 w-56 bg-white border border-pink-100 rounded-xl shadow-lg overflow-hidden">
+                <Link to="/notificacoes" onClick={() => setOpen(false)} className="block px-4 py-3 text-sm hover:bg-pink-soft">Notificações</Link>
                 <Link to="/meus-chats" onClick={() => setOpen(false)} className="flex items-center justify-between px-4 py-3 text-sm hover:bg-pink-soft">
                   Meus Chats
                   {unreadCount > 0 && (

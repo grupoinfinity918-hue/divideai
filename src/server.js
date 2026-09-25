@@ -21,6 +21,7 @@ const ordersRoutes = require('./routes/orders.routes');
 const presaleChatRoutes = require('./routes/presale-chat.routes');
 const reportsRoutes = require('./routes/reports.routes');
 const supportChatRoutes = require('./routes/support-chat.routes');
+const platformRoutes = require('./routes/platform.routes');
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use('/api', ordersRoutes);
 app.use('/api', presaleChatRoutes);
 app.use('/api', reportsRoutes);
 app.use('/api', supportChatRoutes);
+app.use('/api', platformRoutes);
 
 const FRONTEND_DIST = path.join(__dirname, '..', 'frontend', 'dist');
 app.use(express.static(FRONTEND_DIST));

@@ -84,6 +84,97 @@ enum SeasonalTheme {
   SAO_JOAO
 }
 
+enum NotificationType {
+  PAYMENT_CONFIRMED
+  ORDER_STATUS
+  REVIEW_RECEIVED
+  COMMENT
+  NEW_ORDER
+  SYSTEM
+}
+
+enum CommentStatus {
+  VISIBLE
+  HIDDEN
+  DELETED
+}
+
+model OrderEvent {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt, createdAt])
+}
+
+model Comment {
+  id        String        @id @default(uuid())
+  authorId  String
+  author    User          @relation(fields: [authorId], references: [id])
+  targetType String
+  targetId  String
+  content   String        @db.Text
+  status    CommentStatus @default(VISIBLE)
+  moderatedBy String?
+  moderatedAt DateTime?
+  createdAt DateTime      @default(now())
+
+  @@index([targetType, targetId, createdAt])
+}
+
+model Coupon {
+  id             String   @id @default(uuid())
+  code           String   @unique
+  type           CommissionMode
+  value          Decimal  @db.Decimal(12, 2)
+  minAmount      Decimal? @db.Decimal(12, 2)
+  maxUses        Int?
+  usedCount      Int      @default(0)
+  startsAt       DateTime?
+  expiresAt      DateTime?
+  listingId      String?
+  listing        Listing? @relation(fields: [listingId], references: [id])
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id])
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@index([code, active])
+}
+
+model Banner {
+  id          String   @id @default(uuid())
+  title       String?
+  desktopUrl  String
+  mobileUrl   String?
+  href        String?
+  theme       String   @default("DEFAULT")
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 enum WhatsappEvent {
   PIX_CONFIRMED_SELLER
   DELIVERY_CONFIRMED_CLIENT
@@ -125,6 +216,10 @@ model User {
   preSaleChatsAsSeller PreSaleChat[] @relation("PreSaleSellerChats")
   reports         Report[]
   supportChats    SupportChat[]
+  orderEvents     OrderEvent[]
+  notifications   Notification[]
+  comments        Comment[]
+  coupons         Coupon[]
   preSaleMessages PreSaleMessage[] @relation("PreSaleMessageSender")
   supportMessages SupportMessage[] @relation("SupportMessageSender")
 }
@@ -197,6 +292,7 @@ model Listing {
   edits    ListingEdit[]
   orders   Order[]
   preSaleChats PreSaleChat[]
+  coupons Coupon[]
 }
 
 model ListingEdit {
@@ -235,6 +331,7 @@ model Order {
   chat          Chat?
   reviews       Review[]
   notifications WhatsappNotification[]
+  events        OrderEvent[]
 }
 
 model Chat {

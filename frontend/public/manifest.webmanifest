@@ -1,0 +1,10 @@
+{
+  "name": "Divide Aí",
+  "short_name": "Divide Aí",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ec1c6a",
+  "description": "Streaming, assinaturas e serviços digitais.",
+  "icons": []
+}
