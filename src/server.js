@@ -25,7 +25,10 @@ const supportChatRoutes = require('./routes/support-chat.routes');
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+
+// AJUSTADO: Limites de tamanho aumentados para suportar fotos de perfil em Base64/Imagens grandes
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
