@@ -128,6 +128,8 @@ router.post('/pix/charge', async (req, res) => {
 });
 
 router.post('/pix/webhook', async (req, res) => {
+  console.log('Efí webhook recebido:', JSON.stringify(req.body));
+
   const pixEvents = req.body.pix || [];
 
   for (const ev of pixEvents) {

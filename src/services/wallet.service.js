@@ -4,6 +4,15 @@ const prisma = new PrismaClient();
 const HOLD_DAYS = 15;
 
 async function creditSaleHeld(sellerId, orderId, netToSeller) {
+  // Idempotência: a Efí pode reenviar o mesmo webhook.
+  // Nunca devemos criar dois créditos de venda para o mesmo pedido.
+  if (orderId) {
+    const existing = await prisma.walletTransaction.findFirst({
+      where: { orderId, type: 'SALE_HOLD' }
+    });
+    if (existing) return existing;
+  }
+
   const wallet = await prisma.wallet.upsert({
     where: { userId: sellerId },
     update: {},

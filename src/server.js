@@ -23,6 +23,7 @@ const reportsRoutes = require('./routes/reports.routes');
 const supportChatRoutes = require('./routes/support-chat.routes');
 const platformRoutes = require('./routes/platform.routes');
 const { ensureSchemaCompatibility } = require('./services/schema-bootstrap');
+const { registerEfiWebhook } = require('./services/efi-webhook.service');
 
 const app = express();
 
@@ -57,6 +58,7 @@ ensureSchemaCompatibility()
   .then(() => {
     app.listen(PORT, () => {
       console.log(`Divide Aí rodando na porta ${PORT}`);
+      registerEfiWebhook();
     });
   })
   .catch((err) => {
